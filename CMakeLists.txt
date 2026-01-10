@@ -22,11 +22,13 @@ set(PROJECT_SOURCES
     sources/server.cpp
     sources/clientConnection.cpp
     sources/dispatcher.cpp
+    sources/packet.cpp
     headers/mainwindow.h
     headers/server.h
     headers/clientConnection.h
     headers/dispatcher.h
     headers/icommand/icommand.h
+    headers/packet.h
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)

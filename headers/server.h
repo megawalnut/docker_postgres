@@ -6,6 +6,8 @@
 #include <QTcpSocket>
 #include <QMessageBox>
 #include <QList>
+#include <QThread>
+
 #include "clientConnection.h"
 
 class Server: public QTcpServer {

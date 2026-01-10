@@ -15,16 +15,41 @@ Server::Server(uint32_t portNum, QObject* parent) : QTcpServer(parent) {
 
 void Server::slotNewConnection() {
     while(hasPendingConnections()) {
+        //creating thread for the client
+        QThread* thread = new QThread(nullptr);
         QTcpSocket* socket = nextPendingConnection();
-        ClientConnection* newClient = new ClientConnection(socket, this);
-        m_clients.append(newClient);
-        qDebug() << "The client is connected from" << socket->peerAddress() << ":" << socket->peerPort();
+        ClientConnection* newClient = new ClientConnection(socket);
 
-        connect(newClient, &ClientConnection::disconnected,[this, newClient](){
+        //move in thread
+        socket->moveToThread(thread);
+        newClient->moveToThread(thread);
+
+        //read data from socket
+        connect(socket, &QTcpSocket::readyRead,
+                newClient, &ClientConnection::onReadyRead);
+
+        //delete socket
+        connect(socket, &QTcpSocket::disconnected,
+                newClient, &ClientConnection::onDisconnected);
+
+        //delete clientConnection
+        connect(newClient, &ClientConnection::disconnected, [this, newClient, &thread](){
             m_clients.removeOne(newClient);
             newClient->deleteLater();
+            thread->quit();
+            thread->deleteLater();
             qDebug() << "The client is disconnected";
         });
+
+        //add new client in the list
+        m_clients.append(newClient);
+
+        qDebug() << "The client is connected from"
+                 << socket->peerAddress()
+                 << ":"
+                 << socket->peerPort();
+
+        thread->start();
     }
 }
 

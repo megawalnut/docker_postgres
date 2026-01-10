@@ -9,7 +9,7 @@
 class ClientConnection : public QObject {
     Q_OBJECT
 public:
-    explicit ClientConnection(QTcpSocket* clientSocket, QObject* parent = nullptr);
+    explicit ClientConnection(QTcpSocket* clientSocket);
     ~ClientConnection();
 
     enum opcode {
@@ -20,10 +20,11 @@ public:
         Receive
     };
 
-private slots:
+public slots:
     void onDisconnected() {
         emit disconnected();
     }
+    void onReadyRead();
 
 signals:
     void disconnected();
