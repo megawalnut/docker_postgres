@@ -18,17 +18,34 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core Network)
 set(PROJECT_SOURCES
     main.cpp
     ui/mainwindow.ui
+    #________________________________
     sources/mainwindow.cpp
     sources/server.cpp
+    #__________________________
     sources/clientConnection.cpp
     sources/dispatcher.cpp
-    sources/packet.cpp
+    #________________________________
+    sources/icommand/registry.cpp
+    sources/icommand/login.cpp
+    sources/icommand/get.cpp
+    sources/icommand/edit.cpp
+    sources/icommand/update.cpp
+    sources/icommand/pull.cpp
+    #________________________________
+    headers/icommand/icommand.h
+    headers/icommand/registry.h
+    headers/icommand/login.h
+    headers/icommand/get.h
+    headers/icommand/edit.h
+    headers/icommand/update.h
+    headers/icommand/pull.h
+    #________________________________
     headers/mainwindow.h
     headers/server.h
+    #__________________________
     headers/clientConnection.h
     headers/dispatcher.h
-    headers/icommand/icommand.h
-    headers/packet.h
+    headers/utils.h
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)

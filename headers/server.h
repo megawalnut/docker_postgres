@@ -13,7 +13,7 @@
 class Server: public QTcpServer {
     Q_OBJECT
 public:
-    explicit Server(uint32_t portNum, QObject* parent = nullptr);
+    explicit Server(const uint32_t portNum, QObject* parent = nullptr);
     ~Server();
 
 public slots:

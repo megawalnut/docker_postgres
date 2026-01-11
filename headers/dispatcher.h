@@ -1,12 +1,24 @@
 #ifndef DISPATCHER_H
 #define DISPATCHER_H
 
-#include <cstdint>
+#include <QVariantMap>
+
+#include "icommand.h"
 
 class Dispatcher final {
 private:
     explicit Dispatcher();
     ~Dispatcher();
+
+    enum Opcode : uint32_t {
+        None = 0,
+        Login,
+        Registry,
+        Edit,
+        Update,
+        Get,
+        Pull
+    };
 
     Dispatcher(const Dispatcher& other) = delete;
     Dispatcher& operator=(const Dispatcher& other) = delete;
@@ -18,10 +30,11 @@ public:
         return m_singleDispatcher;
     }
 
-    void dispatch(uint32_t command);
+    void dispatch(const uint32_t command, QVariantMap&& data);
 
 private:
     static Dispatcher* m_singleDispatcher;
+    std::vector<std::unique_ptr<ICommand>> m_ptrCommands;
 };
 
 #endif // DISPATCHER_H

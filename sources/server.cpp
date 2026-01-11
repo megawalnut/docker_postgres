@@ -1,6 +1,6 @@
 #include "server.h"
 
-Server::Server(uint32_t portNum, QObject* parent) : QTcpServer(parent) {
+Server::Server(const uint32_t portNum, QObject* parent) : QTcpServer(parent) {
     if(!listen(QHostAddress::Any, portNum)) {
         QMessageBox::critical(0, "Server Error", QString("Unable to start the server: %1").arg(errorString()));
         close();
@@ -24,27 +24,24 @@ void Server::slotNewConnection() {
         socket->moveToThread(thread);
         newClient->moveToThread(thread);
 
-        //read data from socket
         connect(socket, &QTcpSocket::readyRead,
                 newClient, &ClientConnection::onReadyRead);
 
-        //delete socket
         connect(socket, &QTcpSocket::disconnected,
                 newClient, &ClientConnection::onDisconnected);
 
-        //delete clientConnection
         connect(newClient, &ClientConnection::disconnected, [this, newClient, &thread](){
             m_clients.removeOne(newClient);
             newClient->deleteLater();
             thread->quit();
             thread->deleteLater();
-            qDebug() << "The client is disconnected";
+            qDebug() << "the client is disconnected";
         });
 
         //add new client in the list
         m_clients.append(newClient);
 
-        qDebug() << "The client is connected from"
+        qDebug() << "the client is connected from"
                  << socket->peerAddress()
                  << ":"
                  << socket->peerPort();

@@ -4,26 +4,14 @@
 #include <QObject>
 #include <QTcpSocket>
 
-#include "dispatcher.h"
-
 class ClientConnection : public QObject {
     Q_OBJECT
 public:
-    explicit ClientConnection(QTcpSocket* clientSocket);
+    explicit ClientConnection(QTcpSocket* const clientSocket);
     ~ClientConnection();
 
-    enum opcode {
-        None = 0,
-        Autorisation,
-        Registry,
-        Send,
-        Receive
-    };
-
 public slots:
-    void onDisconnected() {
-        emit disconnected();
-    }
+    void onDisconnected();
     void onReadyRead();
 
 signals:
@@ -31,7 +19,7 @@ signals:
 
 private:
     QTcpSocket* m_clientSocket;
-    Dispatcher* m_pdisp;
+    QByteArray m_buffer;   //accumulator
 };
 
 #endif // CLIENTCONNECTION_H
