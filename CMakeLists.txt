@@ -12,8 +12,8 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
 )
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Core Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core Network)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Core Network Sql)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core Network Sql)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -24,7 +24,9 @@ set(PROJECT_SOURCES
     #__________________________
     sources/clientConnection.cpp
     sources/dispatcher.cpp
+    sources/dbhelper.cpp
     #________________________________
+    sources/icommand/icommand.cpp
     sources/icommand/registry.cpp
     sources/icommand/login.cpp
     sources/icommand/get.cpp
@@ -46,10 +48,12 @@ set(PROJECT_SOURCES
     headers/clientConnection.h
     headers/dispatcher.h
     headers/utils.h
+    headers/dbhelper.h
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
     qt_add_executable(pet_proj_1
+        MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
 else()
@@ -67,6 +71,7 @@ target_link_libraries(pet_proj_1 PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Sql
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)

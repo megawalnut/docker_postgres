@@ -3,7 +3,7 @@
 Registry::Registry() {}
 Registry::~Registry() {}
 
-void Registry::exec(QVariantMap&& data) {
+QVariant Registry::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }

@@ -11,7 +11,7 @@ public:
     ~Login() override;
 
     //method for a login
-    void exec(QVariantMap&&) override;
+    QVariant exec(QVariantMap&&) override;
 };
 
 #endif // LOGIN_H

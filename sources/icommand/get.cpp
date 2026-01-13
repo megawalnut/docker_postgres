@@ -3,8 +3,8 @@
 Get::Get() {}
 Get::~Get() {}
 
-void Get::exec(QVariantMap&& data) {
+QVariant Get::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }
 

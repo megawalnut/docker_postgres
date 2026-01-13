@@ -3,7 +3,7 @@
 Pull::Pull() {}
 Pull::~Pull() {}
 
-void Pull::exec(QVariantMap&& data) {
+QVariant Pull::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }

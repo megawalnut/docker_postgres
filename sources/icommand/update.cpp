@@ -3,7 +3,7 @@
 Update::Update() {}
 Update::~Update() {}
 
-void Update::exec(QVariantMap&& data) {
+QVariant Update::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }

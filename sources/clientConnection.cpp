@@ -17,6 +17,7 @@ void ClientConnection::onReadyRead() {
         if(m_buffer.size() < realPackageSize)
             break; //wait full packet
 
+        qDebug() << "The package came from a " << m_clientSocket->peerAddress() << ":" << m_clientSocket->peerPort();
         QByteArray m_acceptedPackage = m_buffer.left(realPackageSize);   //package data
         m_buffer.remove(0, realPackageSize);
         std::pair<const uint32_t, QVariantMap> data = Utils::Packet::deserialize(m_acceptedPackage);

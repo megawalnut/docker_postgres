@@ -3,7 +3,7 @@
 Login::Login() {}
 Login::~Login() {}
 
-void Login::exec(QVariantMap&& data) {
+QVariant Login::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }

@@ -11,7 +11,7 @@ public:
     ~Edit() override;
 
     //method for a edit
-    void exec(QVariantMap&&) override;
+    QVariant exec(QVariantMap&&) override;
 };
 
 #endif // EDIT_H

@@ -2,6 +2,7 @@
 #define DISPATCHER_H
 
 #include <QVariantMap>
+#include <QMutex>
 
 #include "icommand.h"
 
@@ -11,13 +12,13 @@ private:
     ~Dispatcher();
 
     enum Opcode : uint32_t {
-        None = 0,
-        Login,
-        Registry,
-        Edit,
-        Update,
-        Get,
-        Pull
+        none_ = 0,
+        login_,
+        registry_,
+        edit_,
+        update_,
+        get_,
+        pull_
     };
 
     Dispatcher(const Dispatcher& other) = delete;
@@ -35,6 +36,7 @@ public:
 private:
     static Dispatcher* m_singleDispatcher;
     std::vector<std::unique_ptr<ICommand>> m_ptrCommands;
+    QMutex m_mutex;
 };
 
 #endif // DISPATCHER_H

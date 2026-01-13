@@ -11,8 +11,7 @@ public:
     ~Update() override;
 
     //method for a update
-    void exec(QVariantMap&&) override;
+    QVariant exec(QVariantMap&&) override;
 };
 
 #endif // UPDATE_H
-

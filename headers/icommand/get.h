@@ -11,7 +11,7 @@ public:
     ~Get() override;
 
     //method for a get
-    void exec(QVariantMap&&) override;
+    QVariant exec(QVariantMap&&) override;
 };
 
 #endif // GET_H

@@ -3,7 +3,7 @@
 Edit::Edit() {}
 Edit::~Edit() {}
 
-void Edit::exec(QVariantMap&& data) {
+QVariant Edit::exec(QVariantMap&& data) {
 
-    return;
+    return {};
 }
