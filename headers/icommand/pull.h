@@ -11,7 +11,7 @@ public:
     ~Pull() override;
 
     //method for a pull
-    QVariant exec(QVariantMap&&) override;
+    QByteArray exec(QVariantMap&&) override;
 };
 
 #endif // PULL_H

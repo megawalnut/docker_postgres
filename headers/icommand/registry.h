@@ -11,7 +11,7 @@ public:
     ~Registry() override;
 
     //method for a registry
-    QVariant exec(QVariantMap&&) override;
+    QByteArray exec(QVariantMap&&) override;
 };
 
 #endif // REGISTRY_H

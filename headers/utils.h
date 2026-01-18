@@ -33,6 +33,8 @@ namespace Utils {
             out << sizePacket << opcode;
             out.writeRawData(payload.constData(), payload.size());
 
+            qDebug() << "Serialize::success";
+
             return serializePacket;
         }
 
@@ -59,6 +61,8 @@ namespace Utils {
                     break;
                 deserializePacket.insert(key, value);
             }
+            qDebug() << "Deserialize::success";
+
             return {opcode,deserializePacket};
         }
 

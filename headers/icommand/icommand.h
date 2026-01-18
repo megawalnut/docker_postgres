@@ -10,7 +10,7 @@ public:
     virtual ~ICommand() = default;
 
     //method for a specific command
-    virtual QVariant exec(QVariantMap&&) = 0;
+    virtual QByteArray exec(QVariantMap&&) = 0;
 
     static void addDb(const QString& userName,
                        const QString& hostName,
@@ -24,8 +24,8 @@ public:
         }
     }
 
-private:
-    static std::unique_ptr<DBHelper> m_ptrDb;
+protected:
+    static inline std::unique_ptr<DBHelper> m_ptrDb = nullptr;
 };
 
 #endif // ICOMMAND_H

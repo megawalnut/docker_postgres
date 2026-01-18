@@ -26,20 +26,15 @@ set(PROJECT_SOURCES
     sources/dispatcher.cpp
     sources/dbhelper.cpp
     #________________________________
-    sources/icommand/icommand.cpp
     sources/icommand/registry.cpp
     sources/icommand/login.cpp
     sources/icommand/get.cpp
-    sources/icommand/edit.cpp
-    sources/icommand/update.cpp
     sources/icommand/pull.cpp
     #________________________________
     headers/icommand/icommand.h
     headers/icommand/registry.h
     headers/icommand/login.h
     headers/icommand/get.h
-    headers/icommand/edit.h
-    headers/icommand/update.h
     headers/icommand/pull.h
     #________________________________
     headers/mainwindow.h

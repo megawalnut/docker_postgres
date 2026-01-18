@@ -3,18 +3,14 @@
 #include "login.h"
 #include "get.h"
 #include "pull.h"
-#include "update.h"
-#include "edit.h"
 
 Dispatcher* Dispatcher::m_singleDispatcher = nullptr;
 
 Dispatcher::Dispatcher() {
     m_ptrCommands.push_back(std::make_unique<Login>());
     m_ptrCommands.push_back(std::make_unique<Registry>());
-    m_ptrCommands.push_back(std::make_unique<Edit>());
-    m_ptrCommands.push_back(std::make_unique<Get>());
     m_ptrCommands.push_back(std::make_unique<Pull>());
-    m_ptrCommands.push_back(std::make_unique<Update>());
+    m_ptrCommands.push_back(std::make_unique<Get>());
     qDebug() << "The dispetcher was created";
 }
 Dispatcher::~Dispatcher() {}

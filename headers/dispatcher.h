@@ -11,20 +11,18 @@ private:
     explicit Dispatcher();
     ~Dispatcher();
 
-    enum Opcode : uint32_t {
-        none_ = 0,
-        login_,
-        registry_,
-        edit_,
-        update_,
-        get_,
-        pull_
-    };
-
     Dispatcher(const Dispatcher& other) = delete;
     Dispatcher& operator=(const Dispatcher& other) = delete;
 
 public:
+    enum Opcode : uint32_t {
+        none_ = 0,
+        login_,
+        registry_,
+        pull_,
+        get_
+    };
+
     static inline Dispatcher* instance() {
         if(!m_singleDispatcher)
             m_singleDispatcher = new Dispatcher();
