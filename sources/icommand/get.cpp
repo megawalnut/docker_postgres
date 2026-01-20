@@ -12,13 +12,17 @@ QByteArray Get::exec(QVariantMap&& data) {
     auto [ok, tables] = m_ptrDb->send("SELECT table_name FROM information_schema.tables "
                                       "WHERE table_schema='public' AND table_type='BASE TABLE';");
 
-    QVariantMap result;
+    QVariantMap result{{"result", "SUCCESS"}};
     if(ok) {
         for(const auto& table : tables) {
-            auto [success, strings] = m_ptrDb->send(QString("SELECT * FROM %1").arg(table.value(0).toString()));
-            if(!success) continue;
+            auto [success, strings] = m_ptrDb->send(QString("SELECT * FROM %1")
+                                                        .arg(table.value(0).toString()));
+            if(!success) {
+                qDebug() << "GET::failed getdata from dataBase";
+                return Utils::Packet::serialize(Dispatcher::Opcode::get_, {{"result", "FAILED"}});
+            }
 
-            QList<QVariant> linesInTable;
+            QVariantList linesInTable;
             for (const auto& str : strings) {
                 QVariantMap oneLine;
                 for (int i = 0; i < str.count(); ++i) {
@@ -32,9 +36,9 @@ QByteArray Get::exec(QVariantMap&& data) {
             result.insert(table.fieldName(0), linesInTable);
         }
         qDebug() << "GET::success";
-
         return Utils::Packet::serialize(Dispatcher::Opcode::get_, result);
     }
+    qDebug() << "GET::failed";
     return {};
 }
 

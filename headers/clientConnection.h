@@ -13,9 +13,11 @@ public:
 public slots:
     void onDisconnected();
     void onReadyRead();
+    void onPacketReady(const QByteArray& receivedPacket);
 
 signals:
     void disconnected();
+    void packetReady(const QByteArray& receivedPacket);
 
 private:
     QTcpSocket* m_clientSocket;

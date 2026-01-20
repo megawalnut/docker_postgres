@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QMessageBox>
 #include <QList>
 #include <QThread>
 

@@ -12,16 +12,14 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
 )
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Core Network Sql)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core Network Sql)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network Sql)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Sql)
 
 set(PROJECT_SOURCES
     main.cpp
-    ui/mainwindow.ui
-    #________________________________
-    sources/mainwindow.cpp
+    #_________________________________________
+    #_________________________________________
     sources/server.cpp
-    #__________________________
     sources/clientConnection.cpp
     sources/dispatcher.cpp
     sources/dbhelper.cpp
@@ -29,21 +27,22 @@ set(PROJECT_SOURCES
     sources/icommand/registry.cpp
     sources/icommand/login.cpp
     sources/icommand/get.cpp
-    sources/icommand/pull.cpp
+    sources/icommand/update.cpp
+    #_________________________________________
+    #_________________________________________
+    headers/server.h
+    headers/clientConnection.h
+    headers/dispatcher.h
+    headers/utils.h
+    headers/dbhelper.h
     #________________________________
     headers/icommand/icommand.h
     headers/icommand/registry.h
     headers/icommand/login.h
     headers/icommand/get.h
-    headers/icommand/pull.h
-    #________________________________
-    headers/mainwindow.h
-    headers/server.h
-    #__________________________
-    headers/clientConnection.h
-    headers/dispatcher.h
-    headers/utils.h
-    headers/dbhelper.h
+    headers/icommand/update.h
+    #_________________________________________
+    #_________________________________________
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
@@ -63,7 +62,6 @@ target_include_directories(pet_proj_1 PRIVATE
 )
 
 target_link_libraries(pet_proj_1 PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::Sql

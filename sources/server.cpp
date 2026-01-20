@@ -2,12 +2,15 @@
 
 Server::Server(const uint32_t portNum, QObject* parent) : QTcpServer(parent) {
     if(!listen(QHostAddress::Any, portNum)) {
-        QMessageBox::critical(0, "Server Error", QString("Unable to start the server: %1").arg(errorString()));
+        qDebug() << "Server::Server Error";
+        qDebug() << QString("Server::Unable to start the server: %1")
+                            .arg(errorString());
         close();
         return;
     }
 
-    qDebug() << "Server started on port" << portNum;
+    qDebug() << QString("Server::Server started on port %1")
+                        .arg(portNum);
 
     connect(this, &QTcpServer::newConnection,
             this, &Server::slotNewConnection);
@@ -35,16 +38,15 @@ void Server::slotNewConnection() {
             newClient->deleteLater();
             thread->quit();
             thread->deleteLater();
-            qDebug() << "the client is disconnected";
+            qDebug() << "Server::The client is disconnected";
         });
 
         //add new client in the list
         m_clients.append(newClient);
 
-        qDebug() << "the client is connected from"
-                 << socket->peerAddress()
-                 << ":"
-                 << socket->peerPort();
+        qDebug() << QString("Server::The client is connected from %1 : %2")
+                            .arg(socket->peerAddress().toString())
+                            .arg(socket->peerPort());
 
         thread->start();
     }
@@ -52,6 +54,7 @@ void Server::slotNewConnection() {
 
 Server::~Server() {
     if(isListening()) {
+        qDebug() << "Server::Stopping listening on port";
         close();
     }
 }

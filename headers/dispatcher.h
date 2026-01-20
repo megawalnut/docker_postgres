@@ -19,7 +19,7 @@ public:
         none_ = 0,
         login_,
         registry_,
-        pull_,
+        update_,
         get_
     };
 
@@ -29,7 +29,7 @@ public:
         return m_singleDispatcher;
     }
 
-    void dispatch(const uint32_t command, QVariantMap&& data);
+    QByteArray dispatch(const uint32_t command, QVariantMap&& data);
 
 private:
     static Dispatcher* m_singleDispatcher;

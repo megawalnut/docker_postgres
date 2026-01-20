@@ -4,7 +4,9 @@ DBHelper::DBHelper(const QString& userName,
                     const QString& hostName,
                     const QString& dbName,
                     const QString& password) {
-    QString uniqueName = QString("User_%1").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+
+    QString uniqueName = QString("User_%1")
+                                 .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 
     m_db = QSqlDatabase::addDatabase("QPSQL", uniqueName);
 
@@ -12,21 +14,35 @@ DBHelper::DBHelper(const QString& userName,
     m_db.setHostName(hostName);
     m_db.setUserName(userName);
     m_db.setPassword(password);
+    m_db.setPort(5432);
+
+    if(!m_db.open()) {
+        qDebug() << QString("DBHelper::Failed to open %1: %2")
+                            .arg(m_db.hostName())
+                            .arg(m_db.lastError().text());
+    } else {
+        qDebug() << QString("DBHelper::Open %1")
+                            .arg(m_db.hostName());
+    }
 }
 
 void DBHelper::connect() {
     if(!m_db.open()) {
-        qDebug() << QString("Failed to open %1: %2").arg(m_db.hostName()).arg(m_db.lastError().text());
+        qDebug() << QString("DBHelper::Failed to open %1: %2")
+                            .arg(m_db.hostName())
+                            .arg(m_db.lastError().text());
         return;
     }
-    qDebug() << QString("Open %1").arg(m_db.hostName());
+    qDebug() << QString("DBHelper::Open %1")
+                        .arg(m_db.hostName());
 }
 
 DbResult DBHelper::send(const QString& request) const {
     QSqlQuery query(m_db);
 
     if(!query.exec(request)) {
-        qDebug() << "The request cannot be completed " << query.lastError().text();
+        qDebug() << QString("DBHelper::The request cannot be completed %1")
+                            .arg(query.lastError().text());
         return {false, {}};
     }
 
@@ -42,6 +58,6 @@ DbResult DBHelper::send(const QString& request) const {
 DBHelper::~DBHelper() {
     if(m_db.isOpen()) {
         m_db.close();
-        qDebug() << "Database is closed";
+        qDebug() << "DBHelper::Database is closed";
     }
 }
