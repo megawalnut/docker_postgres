@@ -3,10 +3,9 @@
 #include "dispatcher.h"
 
 ClientConnection::ClientConnection(QTcpSocket* const socket) : m_clientSocket(socket) {
-    connect(this, &ClientConnection::packetReady,
-            this, &ClientConnection::onPacketReady);
+    m_clientSocket = socket;
+    m_clientSocket->setParent(this);
 }
-ClientConnection::~ClientConnection() {}
 
 void ClientConnection::onDisconnected() {
     emit disconnected();
@@ -27,11 +26,11 @@ void ClientConnection::onReadyRead() {
         qDebug() << QString("The package came from a %1 : %2")
                             .arg(m_clientSocket->peerAddress().toString())
                             .arg(m_clientSocket->peerPort());
-        QByteArray m_acceptedPackage = m_buffer.left(realPackageSize);   //package data
+        QByteArray acceptedPackage = m_buffer.left(realPackageSize);   //package data
         m_buffer.remove(0, realPackageSize);
-        std::pair<const uint32_t, QVariantMap> data = Utils::Packet::deserialize(m_acceptedPackage);
+        std::pair<const uint32_t, QVariantMap> data = Utils::Packet::deserialize(acceptedPackage);
         QByteArray receivedPacket = Dispatcher::instance()->dispatch(data.first, std::move(data.second));
-        emit packetReady(receivedPacket);
+        onPacketReady(receivedPacket);
     }
 }
 
@@ -55,5 +54,5 @@ void ClientConnection::onPacketReady(const QByteArray& receivedPacket) {
     if(flushed)
         qDebug() << "ClientConnection::success!Writed";
     else
-    qDebug() << "ClientConnection::failed!Flush error";
+        qDebug() << "ClientConnection::failed!Flush error";
 }

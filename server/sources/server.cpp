@@ -24,8 +24,8 @@ void Server::slotNewConnection() {
         ClientConnection* newClient = new ClientConnection(socket);
 
         //move in thread
-        socket->moveToThread(thread);
         newClient->moveToThread(thread);
+        socket->setParent(newClient);
 
         connect(socket, &QTcpSocket::readyRead,
                 newClient, &ClientConnection::onReadyRead);
@@ -33,10 +33,11 @@ void Server::slotNewConnection() {
         connect(socket, &QTcpSocket::disconnected,
                 newClient, &ClientConnection::onDisconnected);
 
-        connect(newClient, &ClientConnection::disconnected, [this, newClient, &thread](){
+        connect(newClient, &ClientConnection::disconnected, [this, newClient, thread](){
             m_clients.removeOne(newClient);
             newClient->deleteLater();
             thread->quit();
+            thread->wait();
             thread->deleteLater();
             qDebug() << "Server::The client is disconnected";
         });
@@ -53,6 +54,11 @@ void Server::slotNewConnection() {
 }
 
 Server::~Server() {
+    for(ClientConnection* client : m_clients) {
+        client->deleteLater();
+    }
+    m_clients.clear();
+
     if(isListening()) {
         qDebug() << "Server::Stopping listening on port";
         close();

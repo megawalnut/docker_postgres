@@ -2,9 +2,6 @@
 #include "utils.h"
 #include "dispatcher.h"
 
-Update::Update() {}
-Update::~Update() {}
-
 QByteArray Update::exec(QVariantMap&& data) {
     for(const auto tableName : data.keys()) {
         QVariantList rows = data.value(tableName).toList();

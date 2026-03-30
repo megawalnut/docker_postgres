@@ -14,7 +14,7 @@ public:
     ~DBHelper();
 
     void connect();
-    DbResult send(const QString& request) const;
+    DbResult send(const QString& request);
 
 private:
     QSqlDatabase m_db;    //postgres

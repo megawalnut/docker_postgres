@@ -4,14 +4,17 @@
 #include <QVariantMap>
 
 #include "icommand.h"
+#include "dbhelper.h"
 
 class Login : public ICommand {
 public:
-    Login() = default;
-    ~Login() = default;
+    explicit Login(DBHelper* db);
 
     //method for a login
-    QByteArray exec(QVariantMap&&) override;
+    QByteArray exec(const QVariantMap& data) override;
+
+private:
+    DBHelper* m_ptrDb;
 };
 
 #endif // LOGIN_H

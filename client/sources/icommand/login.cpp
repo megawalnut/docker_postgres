@@ -1,14 +1,16 @@
 #include "login.h"
 #include "utils.h"
-#include "dispatcher.h"
+#include "serverOpcode.h"
 
-QByteArray Login::exec(QVariantMap&& data) {
+Login::Login(DBHelper* db) : m_ptrDb(db) {}
+
+QByteArray Login::exec(const QVariantMap& data) {
     QString username = data.value("name").toString();
     QString userPassword = data.value("password").toString();
 
     if(username.isEmpty() || userPassword.isEmpty()) {
         qDebug() << "Login::Ivalid data";
-        return Utils::Packet::serialize(Dispatcher::Opcode::login_, {{"result", "FAILED"}});
+        return Utils::Packet::serialize(static_cast<uint32_t>(ServerOpcode::login), {{"result", "FAILED"}});
     }
 
     //hashing userPassword
@@ -16,17 +18,15 @@ QByteArray Login::exec(QVariantMap&& data) {
     QString hashedHex = QString(hashedPassword.toHex());
 
     //adding user in users table with userRoles
-    auto [success, strings] = m_ptrDb->send(QString("SELECT role FROM users WHERE username='%1' AND password_hash='%2'")
-                                                    .arg(username)
-                                                    .arg(hashedHex));
+    auto [success, strings] = m_ptrDb->send("SELECT role FROM users WHERE username = ? AND password_hash = ?", {username, hashedHex});
     if(!success || strings.empty()) {
         qDebug() << "Login::failed";
-        return Utils::Packet::serialize(Dispatcher::Opcode::login_, {{"result", "FAILED"}});
+        return Utils::Packet::serialize(static_cast<uint32_t>(ServerOpcode::login), {{"result", "FAILED"}});
     }
     QString userRole = strings[0].value("role").toString();
 
     qDebug() << QString("Login::success for user %1 role:%2")
                         .arg(username)
                         .arg(userRole);
-    return Utils::Packet::serialize(Dispatcher::Opcode::login_, {{"result", "SUCCESS"}, {"userRole", userRole}});
+    return Utils::Packet::serialize(static_cast<uint32_t>(ServerOpcode::login), {{"result", "SUCCESS"}, {"userRole", userRole}});
 }

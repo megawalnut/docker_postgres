@@ -2,10 +2,6 @@
 #include "utils.h"
 #include "dispatcher.h"
 
-
-Get::Get() {}
-Get::~Get() {}
-
 QByteArray Get::exec(QVariantMap&& data) {
     Q_UNUSED(data);
 

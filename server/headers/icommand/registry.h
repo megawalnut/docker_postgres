@@ -7,8 +7,8 @@
 
 class Registry : public ICommand {
 public:
-    Registry();
-    ~Registry() override;
+    Registry() = default;
+    ~Registry() = default;
 
     //method for a registry
     QByteArray exec(QVariantMap&&) override;

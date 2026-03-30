@@ -14,7 +14,7 @@ DBHelper::DBHelper(const QString& userName,
     m_db.setHostName(hostName);
     m_db.setUserName(userName);
     m_db.setPassword(password);
-    m_db.setPort(5432);
+    m_db.setPort(5432); //the base PostgreSQL port
 
     if(!m_db.open()) {
         qDebug() << QString("DBHelper::Failed to open %1: %2")
@@ -37,7 +37,7 @@ void DBHelper::connect() {
                         .arg(m_db.hostName());
 }
 
-DbResult DBHelper::send(const QString& request) const {
+DbResult DBHelper::send(const QString& request) {
     QSqlQuery query(m_db);
 
     if(!query.exec(request)) {

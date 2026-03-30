@@ -7,8 +7,8 @@
 
 class Update : public ICommand {
 public:
-    Update();
-    ~Update() override;
+    Update() = default;
+    ~Update() = default;
 
     //method for a update
     QByteArray exec(QVariantMap&&) override;

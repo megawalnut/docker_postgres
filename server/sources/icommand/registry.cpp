@@ -2,9 +2,6 @@
 #include "utils.h"
 #include "dispatcher.h"
 
-Registry::Registry() {}
-Registry::~Registry() {}
-
 QByteArray Registry::exec(QVariantMap&& data) {
     QString role = data.value("role").toString();
     QString username = data.value("name").toString();
@@ -15,7 +12,7 @@ QByteArray Registry::exec(QVariantMap&& data) {
         qDebug() << "Registry::Ivalid data";
         return Utils::Packet::serialize(Dispatcher::Opcode::registry_, {{"result", "FAILED"}});
     }
-    if(role != "superuser" || userRole == "superuser") {
+    if(role != "superuser") {
         qDebug() << "Registry::Access denied";
         return Utils::Packet::serialize(Dispatcher::Opcode::registry_, {{"result", "FAILED"}});
     }

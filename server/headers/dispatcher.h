@@ -9,14 +9,14 @@
 class Dispatcher final {
 private:
     explicit Dispatcher();
-    ~Dispatcher();
+    ~Dispatcher() = default;
 
     Dispatcher(const Dispatcher& other) = delete;
     Dispatcher& operator=(const Dispatcher& other) = delete;
 
 public:
     enum Opcode : uint32_t {
-        none_ = 0,
+        unknown_ = 0,
         login_,
         registry_,
         update_,
@@ -33,7 +33,7 @@ public:
 
 private:
     static Dispatcher* m_singleDispatcher;
-    std::vector<std::unique_ptr<ICommand>> m_ptrCommands;
+    std::vector<std::unique_ptr<ICommand>> m_listCommands;
     QMutex m_mutex;
 };
 

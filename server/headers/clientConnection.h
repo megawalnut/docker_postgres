@@ -8,7 +8,7 @@ class ClientConnection : public QObject {
     Q_OBJECT
 public:
     explicit ClientConnection(QTcpSocket* const clientSocket);
-    ~ClientConnection();
+    ~ClientConnection() = default;
 
 public slots:
     void onDisconnected();
