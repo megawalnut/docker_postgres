@@ -11,48 +11,51 @@
 #include <QPair>
 
 #include "../models/tableModel.h"
+#include "controller.h"
+#include "../../appContext.h"
 
 class MainPage : public QWidget {
     Q_OBJECT
+    using SyncState = AppContext::SyncState;
 public:
-    explicit MainPage(QWidget *parent = nullptr);
+    explicit MainPage(Controller* controller, QWidget *parent = nullptr);
     void setTableModel(TableModel* data);
-    void setUserModel(const QList<QString>& data);
+    void setUserModel(const QStringList& data);
     void setCurrentUser(const QString& user);
 
 private:
     void init();
     void setupConnections();
-    void setStatus();
-
-public slots:
-    void onCurrentUserChanged();
-
-signals:
-    void userChanged();
+    void setStatus(AppContext::SyncState status);
+    void setStatusUser();
 
 private:
+    //current user
+    QLabel* m_currentUser = nullptr;
     QString m_currentUserName;
 
-    QTableView* m_tableView = nullptr;
-    QComboBox* m_userNames;
-
-
-    QPushButton* m_rollback;
-    QPushButton* m_push;
-    QPushButton* m_insert;
-    QPushButton* m_delete;
-    QPushButton* m_change;
-
-
-    QLabel* m_currentUser;
-    QLabel* m_tableName;
-    QLabel* m_status;
-
-    bool dataChanged = false;
-    QPair<QString, QString> statuses = {"🟢 Synced" , "🔴 Unsynced"};
-    TableModel* m_records = nullptr;
+    //users model
+    QComboBox* m_userNames = nullptr;
     QList<QString> m_users;
+
+    //table model
+    QLabel* m_tableName;
+    QTableView* m_tableView = nullptr;
+    TableModel* m_records = nullptr;
+
+    //buttons
+    QPushButton* m_rollback = nullptr;
+    QPushButton* m_sync = nullptr;
+    QPushButton* m_insert = nullptr;
+    QPushButton* m_delete = nullptr;
+    QPushButton* m_change = nullptr;
+
+    //status
+    QLabel* m_status = nullptr;
+    QPair<QString, QString> statuses = {"🟢 Synced" , "🔴 Unsynced"};
+
+    //controller
+    Controller* m_controller = nullptr;
 };
 
 #endif // MAINPAGE_H

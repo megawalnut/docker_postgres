@@ -7,8 +7,6 @@
 #include "../UI/authPage.h"
 #include "../UI/mainPage.h"
 
-#include "../models/tableModel.h"
-
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -17,22 +15,17 @@ public:
         Main,
     };
 
-    MainWindow(QWidget *parent = nullptr);
-    void init();
+    explicit MainWindow(Controller* controller, QWidget *parent = nullptr);
 
-    void setupModels();
+private:
+    void init();
     void setupConnections();
 
 private:
-    void onLoginSuccess(const QString user);
+    QStackedWidget* m_stack = nullptr;
+    AuthPage* m_authPage = nullptr;
+    MainPage* m_mainPage = nullptr;
 
-private:
-    QString m_currentUser = "user1";
-    QList<QString> m_users = {"user1", "user2", "user3"};
-    TableModel* m_tableData;
-
-    QStackedWidget* m_stack;
-    AuthPage* m_authPage;
-    MainPage* m_mainPage;
+    Controller* m_controller = nullptr;
 };
 #endif // MAINWINDOW_H

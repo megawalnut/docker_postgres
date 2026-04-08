@@ -4,10 +4,11 @@
 #include <QtSql>
 
 using DbResult = std::pair<bool, std::vector<QSqlRecord>>;
+extern const QString PATH;
 
-class DBHelper final {
+class DBHelper {
 public:
-    DBHelper(const QString& filePath);
+    DBHelper(const QString& filePath = PATH);
     ~DBHelper();
 
     DbResult send(const QString& request,  const QVariantList& values);

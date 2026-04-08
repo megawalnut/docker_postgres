@@ -1,40 +1,56 @@
+#include <QMessageBox>
+
 #include "mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(Controller* controller, QWidget *parent)
     :
     QMainWindow(parent),
-    m_tableData(new TableModel(this)),
-    m_authPage(new AuthPage(this)),
-    m_mainPage(new MainPage(this)) {
+    m_controller(controller),
+    m_authPage(new AuthPage(controller)),
+    m_mainPage(new MainPage(controller))
+{
+    qDebug() << "MainWindow::MainWindow";
 
     init();
-    setupModels();
     setupConnections();
 }
 
 void MainWindow::init() {
-    //central stack
+    qDebug() << "MainWindow::init";
+
     m_stack = new QStackedWidget(this);
     setCentralWidget(m_stack);
 
     m_stack->addWidget(m_authPage);
     m_stack->addWidget(m_mainPage);
 
-    m_stack->setCurrentWidget(m_mainPage);
-}
-
-void MainWindow::setupModels() {
-    m_mainPage->setTableModel(m_tableData);
-    m_mainPage->setCurrentUser(m_currentUser);
-    m_mainPage->setUserModel(m_users);
+    m_stack->setCurrentIndex(static_cast<int>(Pages::Auth));
 }
 
 void MainWindow::setupConnections() {
-    // connect(m_authPage, &Controller::loginSuccess,
-    //         this, &MainWindow::onLoginSuccess);
-}
+    qDebug() << "MainWindow::setupConnections";
 
-void MainWindow::onLoginSuccess(const QString user) {
-    m_currentUser = user;
-    m_mainPage->setCurrentUser(user);
+    connect(m_controller, &Controller::authSuccess,
+            this, [this](bool isLogin, const QString name) {
+            m_controller->onFullDumpFromServer({});
+            QMessageBox::information(
+                    this,
+                    isLogin ? "Login success" : "Registry success",
+                    QString("Welcome %1!").arg(name),
+                    QMessageBox::Button::Ok
+                    );
+            m_stack->setCurrentIndex(static_cast<int>(Pages::Main));
+    });
+
+    connect(m_controller, &Controller::logout,
+            this, [this]() {
+            QMessageBox::critical(
+                    this,
+                    "Error",
+                    QString("Error!"
+                    "Couldn't find the user!"
+                    "Check your username and password!"),
+                    QMessageBox::Button::Ok
+                    );
+    });
 }

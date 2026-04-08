@@ -5,6 +5,7 @@
 #include <QVariantMap>
 
 #include "serverOpcode.h"
+#include "localOpcode.h"
 
 class Dispatcher final : public QObject {
     Q_OBJECT
@@ -16,18 +17,17 @@ private:
     Dispatcher& operator=(const Dispatcher& other) = delete;
 
 public:
+    void dispatch(ServerOpcode command, const QVariantMap& data);   //server commands
+    void dispatch(LocalOpcode command, const QVariantMap& data);    //local commands
+
     static Dispatcher& instance() {
         static Dispatcher instance;
         return instance;
     }
 
-    void dispatch(ServerOpcode command, const QVariantMap& data);
-
 signals:
-    void loginReceived(QVariantMap data);
-    void registryReceived(QVariantMap data);
-    void updateReceived(QVariantMap data);
-    void getReceived(QVariantMap data);
+    void serverCommand(ServerOpcode command, QVariantMap data);    //server commands
+    void localCommand(LocalOpcode command, QVariantMap data);    //local commands
 };
 
 #endif // DISPATCHER_H

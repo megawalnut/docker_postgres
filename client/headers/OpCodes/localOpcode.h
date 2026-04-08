@@ -3,11 +3,11 @@
 
 #include <cstdint>
 
-enum class LocalOpcode : uint32_t{
+enum class LocalOpcode : uint32_t {
     Unknown = 0,
     Insert,
     Delete,
-    Update,
-    Select
+    Change,
+    Update
 };
 #endif //LOCALOPCODE_H

@@ -9,6 +9,7 @@
 #include <QTabWidget>
 #include <QCryptographicHash>
 
+#include "controller.h"
 
 class AuthPage : public QWidget {
     Q_OBJECT
@@ -18,25 +19,23 @@ public:
         SignUp
     };
 
-    explicit AuthPage(QWidget *parent = nullptr);
+    explicit AuthPage(Controller* controller, QWidget *parent = nullptr);
 
 private:
     void init();
     void setupConnections();
-    QString hashPassword(const QString& password) const;
-
-signals:
-    void loginRequested(QString user, QString pass);
-    void registerRequested(QString user, QString pass);
 
 private:
-    QLineEdit* m_loginUser;
-    QLineEdit* m_loginPass;
-    QPushButton* m_loginBtn;
+    QLineEdit* m_loginUser = nullptr;
+    QLineEdit* m_loginPass = nullptr;
+    QPushButton* m_loginBtn = nullptr;
 
-    QLineEdit* m_regUser;
-    QLineEdit* m_regPass;
-    QPushButton* m_regBtn;
+    QLineEdit* m_regUser = nullptr;
+    QLineEdit* m_regPass = nullptr;
+    QPushButton* m_regBtn = nullptr;
+
+    //controller
+    Controller* m_controller = nullptr;
 };
 
 #endif // AUTHPAGE_H

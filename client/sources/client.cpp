@@ -1,7 +1,21 @@
 #include "client.h"
+#include "utils.h"
 
-Client::Client(const quint16 portNum, const QString& serverAddress, QWidget* parent) : QWidget(parent), m_portNum(portNum), m_serverAddress(serverAddress) {
+Client::Client(const quint16 portNum,
+               const QString& serverAddress,
+               QObject* parent)
+    :
+    QObject(parent),
+    m_portNum(portNum),
+    m_serverAddress(serverAddress),
+    m_reconnecting(false)
+{
+    qDebug() << "Client::client: Client created";
+
     m_serverSocket = new QTcpSocket(this);
+
+    qDebug() << "Client::client: Connection...";
+
     m_serverSocket->connectToHost(m_serverAddress, m_portNum);
 
     connect(m_serverSocket, &QTcpSocket::readyRead,
@@ -18,9 +32,11 @@ Client::Client(const quint16 portNum, const QString& serverAddress, QWidget* par
 }
 
 void Client::onConnected() {
-    qDebug() << QString("Client::Client connected to server on address %1 : %2")
+    qDebug() << QString("Client::onConnected: Connected to server on address %1:%2")
                     .arg(m_serverAddress)
                     .arg(m_portNum);
+
+    m_reconnecting = false;
 }
 
 void Client::onReadyRead() {
@@ -28,18 +44,37 @@ void Client::onReadyRead() {
     m_buffer.append(m_serverSocket->readAll());
 
     //if received a part of the package < 4b
-    while(m_buffer.size() >= sizeof(uint32_t)) {
+    while(m_buffer.size() >= MIN_PACKET_PART) {
         uint32_t realPackageSize;
-        memcpy(&realPackageSize, m_buffer.constData(), sizeof(uint32_t));
-        realPackageSize = qFromLittleEndian(realPackageSize);
+        QDataStream stream(&m_buffer, QIODevice::ReadOnly);
+
+        stream.setVersion(QDataStream::Qt_6_0);
+        stream.setByteOrder(QDataStream::ByteOrder::LittleEndian);
+
+        // first 4 bytes - real package size(See also: utiils::structure_packet)
+        stream >> realPackageSize;
+
+        if (realPackageSize > MAX_PACKET_SIZE) {
+            qWarning() << "Client::onReadyRead: Too big packet";
+            m_buffer.clear();
+            return;
+        }
 
         //if received a part of the package
-        if(m_buffer.size() < realPackageSize)
+        if(m_buffer.size() < realPackageSize) {
             break; //wait full packet
+        }
 
-        qDebug() << QString("The package came from a %1 : %2")
+        if (realPackageSize < MIN_PACKET_SIZE) {
+            qWarning() << "Client::onReadyRead: Invalid packet";
+            m_buffer.clear();
+            return;
+        }
+
+        qDebug() << QString("Client::onReadyRead: The package came from a %1:%2")
                         .arg(m_serverAddress)
                         .arg(m_portNum);
+
 
         QByteArray acceptedPackage = m_buffer.left(realPackageSize);   //package data
         m_buffer.remove(0, realPackageSize);
@@ -48,47 +83,53 @@ void Client::onReadyRead() {
     }
 }
 
-void Client::sendPacket(const QByteArray& receivedPacket) {
-    if(!m_serverSocket || m_serverSocket->state() != QAbstractSocket::ConnectedState) {
-        qDebug() << "Client::failed!Socket not connected";
+void Client::sendPacket(const QByteArray& clientPacket) {
+    if(!connected()) {
+        qWarning() << "Client::sendPacket: Failed! Socket not connected";
         return;
     }
-    if(receivedPacket.isEmpty()) {
-        qDebug() << "Client::Invalid received data";
+    if(clientPacket.isEmpty()) {
+        qWarning() << "Client::sendPacket: Invalid received data";
         return;
     }
 
-    qint64 bytesWritten = m_serverSocket->write(receivedPacket);
+    qint64 bytesWritten = m_serverSocket->write(clientPacket);
     if(bytesWritten == -1) {
-        qDebug() << "Client::failed!Write error";
+        qWarning() << "Client::sendPacket: Failed! Write error";
         return;
     }
-
-    bool flushed = m_serverSocket->flush();
-    qDebug() << (flushed ? "Client::success!Writed"
-                         : "Client::failed!Flush error");
 }
 
-
 void Client::onError(QAbstractSocket::SocketError err) {
+    m_reconnecting = true;
     switch(err) {
     case QAbstractSocket::HostNotFoundError:
-        qDebug() << "Error: The host was not found.";
-        break;
+        qWarning() << "Client::onError: Error: The host was not found.";
+        return;
     case QAbstractSocket::RemoteHostClosedError:
-        qDebug() << "Error: The remote host is closed.";
-        break;
+        qWarning() << "Client::onError: Error: The remote host is closed.";
+        return;
     case QAbstractSocket::ConnectionRefusedError:
-        qDebug() << "Error: The connection was refused.";
-        break;
+        qWarning() << "Client::onError: Error: The connection was refused.";
+        return;
     default:
-        qDebug() << "Error:" << m_serverSocket->errorString();
-        break;
+        qWarning() << "Client::onError: Error:" << m_serverSocket->errorString();
+        return;
     }
 }
 
 void Client::onDisconnected() {
-    qDebug() << QString("Client::Disconnected from server %1 : %2")
+    qDebug() << QString("Client::onDisconnected: Disconnected from server %1:%2")
                     .arg(m_serverAddress)
                     .arg(m_portNum);
+    m_buffer.clear();
+
+    if (m_reconnecting)
+        return;
+
+    m_reconnecting = true;
+
+    QTimer::singleShot(5000, this, [this]() {
+        m_serverSocket->connectToHost(m_serverAddress, m_portNum);
+    });
 }

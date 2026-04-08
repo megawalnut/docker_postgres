@@ -4,6 +4,8 @@
 #include <QAbstractTableModel>
 #include <QObject>
 
+#include "../appContext.h"
+
 class TableModel : public QAbstractTableModel {
     Q_OBJECT
 public:
@@ -24,7 +26,7 @@ public:
     };
 
     struct Record {
-        uint32_t id;
+        uint32_t id = counter++;
         Type     type;
         QString  name;
         QString  brand;
@@ -39,7 +41,25 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
+public:
+    int insertRow();
+    int deleteRow(int selectedRow);
+    QVariantMap changeField(int selectedRow,  int selectedCol, const QVariant& value);
+
+    AppContext::SyncState getSyncState() const;
+    void setSyncState(AppContext::SyncState status);
+
+    QString getTableName() const;
+    void setTableName(const QString& name);
+
+signals:
+    void syncStateChanged(AppContext::SyncState);
+
 private:
+    static uint32_t counter;
+
+    QString m_tableName;
+    AppContext::SyncState m_dataChanged = AppContext::SyncState::Unsynced;
     QList<Record> m_tableData;
 };
 

@@ -1,6 +1,8 @@
+#include <QMessageBox>
+
 #include "../UI/mainPage.h"
 
-MainPage::MainPage(QWidget *parent) : QWidget{parent} {
+MainPage::MainPage(Controller* controller, QWidget *parent) : QWidget{parent}, m_controller{controller} {
     qDebug() << "MainPage::MainPage";
     init();
     setMinimumSize(638, 400);
@@ -27,8 +29,8 @@ void MainPage::init() {
         m_rollback = new QPushButton("Rollback");
         tabbar->addWidget(m_rollback);
 
-        m_push = new QPushButton("Sync");
-        tabbar->addWidget(m_push);
+        m_sync = new QPushButton("Sync");
+        tabbar->addWidget(m_sync);
 
         main->addLayout(tabbar);
     }
@@ -78,18 +80,22 @@ void MainPage::init() {
 
         main->addLayout(taskbar);
 
-        setStatus();
+        setStatus(AppContext::SyncState::Unknown);
     }
 }
 
 void MainPage::setTableModel(TableModel* data) {
     qDebug() << "MainPage::setTableModel";
+    if(data == nullptr)
+        return;
+
     m_records = data;
+
     if (m_tableView && m_records)
         m_tableView->setModel(m_records);
 }
 
-void MainPage::setUserModel(const QList<QString>& data) {
+void MainPage::setUserModel(const QStringList& data) {
     qDebug() << "MainPage::setUserModel";
     m_users = data;
     int index = -1;
@@ -113,32 +119,128 @@ void MainPage::setCurrentUser(const QString& user) {
         m_currentUserName = user;
         m_currentUser->setText(m_currentUserName);
 
-        if(m_userNames->count() > 0)
+        if(m_userNames->count() > 0) {
+            m_userNames->blockSignals(true);
             m_userNames->setCurrentText(m_currentUserName);
+            m_userNames->blockSignals(false);
+        }
+        setStatusUser();
     }
 }
 
-void MainPage::setStatus() {
+void MainPage::setStatus(AppContext::SyncState status) {
     qDebug() << "MainPage::setStatus";
-    if (dataChanged) {
+    switch(status) {
+    case SyncState::Unsynced:
         m_status->setText("🔴 Unsynced");
         m_status->setStyleSheet("color: red;");
-        m_push->setStyleSheet("color: red;");
-    } else {
+        m_sync->setStyleSheet("color: red;");
+        m_sync->setEnabled(true);
+        break;
+    case SyncState::Synced:
         m_status->setText("🟢 Synced");
         m_status->setStyleSheet("color: green;");
-        m_push->setStyleSheet("color: green;");
+        m_sync->setStyleSheet("color: green;");
+        m_sync->setEnabled(false);
+        break;
+    case SyncState::Unknown:
+    default:
+        m_status->setText("🟢 Unknown");
+        m_status->setStyleSheet("color: gray;");
+        m_sync->setStyleSheet("color: gray;");
+        m_sync->setEnabled(false);
+        break;
+    }
+}
+
+void MainPage::setStatusUser() {
+    qDebug() << "MainPage::onCurrentUserChanged";
+    if(m_userNames->currentText() == m_currentUserName) {
+        m_currentUser->setStyleSheet("color: green;");
+    } else {
+        m_currentUser->setStyleSheet("color: orange;");
     }
 }
 
 void MainPage::setupConnections() {
     qDebug() << "MainPage::setupConnections";
+
+    //sync table
+    connect(m_sync, &QPushButton::clicked,
+            this, [this]() {
+                bool responce = QMessageBox::question(
+                                    this,
+                                    "Syncronize",
+                                    "Are you sure you want to synchronize?",
+                                    QMessageBox::Yes | QMessageBox::No
+                                    ) == QMessageBox::Yes;
+                if(responce)
+                    m_controller->onSync();
+    });
+
+    //rollback table
+    connect(m_rollback, &QPushButton::clicked,
+            this, [this]() {
+                bool responce = QMessageBox::question(
+                                    this,
+                                    "Reset",
+                                    "Are you sure you want to rollback?",
+                                    QMessageBox::Yes | QMessageBox::No
+                                    ) == QMessageBox::Yes;
+                if(responce)
+                    m_controller->onRollback();
+    });
+
+    //insert row
+    connect(m_insert, &QPushButton::clicked,
+            m_controller, &Controller::onInsertRow);
+
+    //delete row
+    connect(m_delete, &QPushButton::clicked,
+            this, [this]() {
+                            if (!m_tableView)
+                                return;
+
+                            QModelIndex index = m_tableView->currentIndex();
+                            if (!index.isValid())
+                                return;
+
+                            m_controller->onDeleteRow(index.row());
+                        });
+
+    //change field
+    connect(m_change, &QPushButton::clicked,
+            this, [this]() {
+                        if (!m_tableView)
+                            return;
+
+                        QModelIndex index = m_tableView->currentIndex();
+                        if (!index.isValid())
+                            return;
+
+                            m_controller->onChangeField(index.row(), index.column(), index.data(Qt::DisplayRole));
+                        });
+
+    //update table
     connect(m_userNames, &QComboBox::currentTextChanged,
-            this, &MainPage::onCurrentUserChanged);
+            this, [this] (const QString& text) {
+                setStatusUser();
+                m_controller->onUpdateTable(text);
+                        });
 
-}
+    //from controller; set users model
+    connect(m_controller, &Controller::usersChanged,
+            this, [this](const QStringList& users) { setUserModel(users); });
 
-void MainPage::onCurrentUserChanged() {
-    qDebug() << "MainPage::onCurrentUserChanged";
-    // change table/ not users
+    //from controller; set current user
+    connect(m_controller, &Controller::currentUserChanged,
+            this, [this](const QString& user) { setCurrentUser(user); });
+
+    //from controller; set model
+    connect(m_controller, &Controller::currentModelChanged,
+            this, [this](TableModel* table) { setTableModel(table); });
+
+    //from controller; set status
+    connect(m_controller, &Controller::statusChanged,
+            this, [this]() { setStatus(static_cast<SyncState>(m_controller->getStatus())); });
 }

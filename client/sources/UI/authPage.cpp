@@ -1,6 +1,6 @@
 #include "../UI/authPage.h"
 
-AuthPage::AuthPage(QWidget *parent) : QWidget{parent} {
+AuthPage::AuthPage(Controller* controller, QWidget *parent) : QWidget{parent}, m_controller{controller} {
     qDebug() << "AuthPage::AuthPage";
     init();
     setupConnections();
@@ -50,6 +50,7 @@ void AuthPage::init() {
 
             QLabel* password = new QLabel("password");
             m_loginPass = new QLineEdit();
+            m_loginPass->setEchoMode(QLineEdit::Password);
 
             password->setFixedWidth(60);
             m_loginPass->setFixedWidth(150);
@@ -113,6 +114,7 @@ void AuthPage::init() {
 
             password->setFixedWidth(60);
             m_regPass->setFixedWidth(150);
+            m_regPass->setEchoMode(QLineEdit::Password);
 
             row->addWidget(password);
             row->addWidget(m_regPass);
@@ -139,14 +141,14 @@ void AuthPage::init() {
 void AuthPage::setupConnections() {
     qDebug() << "AuthPage::setupConnections";
     connect(m_loginBtn, &QPushButton::clicked,
-            this, [this]() { emit loginRequested(m_loginUser->text(), hashPassword(m_loginPass->text())); });
+            this, [this]() {
+                if (!m_controller)
+                    return;
+                m_controller->onSignIn(m_loginUser->text(), m_loginPass->text());
+    });
     connect(m_regBtn, &QPushButton::clicked,
-            this, [this]() { emit registerRequested(m_regUser->text(), hashPassword(m_regPass->text())); });
-}
-
-QString AuthPage::hashPassword(const QString& password) const {
-    qDebug() << "AuthPage::hashPassword";
-    //hashing userPassword
-    QByteArray hashedPassword = QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha256);
-    return QString(hashedPassword.toHex());
+            this, [this]() {
+                if (!m_controller)
+                    return;
+                m_controller->onSignUp(m_regUser->text(), m_regPass->text()); });
 }

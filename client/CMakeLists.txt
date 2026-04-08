@@ -17,19 +17,16 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Sql Widgets)
 
 set(PROJECT_SOURCES
     main.cpp
-    mainwindow.cpp
-    mainwindow.h
+    mainwindow.cpp mainwindow.h
+    appContext.h
     #_________________________________________
     #___________Sources_______________________
     sources/client.cpp
-    sources/dispatcher.cpp
-    sources/dbhelper.cpp
-    sources/controller.cpp
-    #___________ICommand_____________
-    sources/icommand/registry.cpp
-    sources/icommand/login.cpp
-    sources/icommand/get.cpp
-    sources/icommand/update.cpp
+    #___________DBHelpers____________
+    sources/DBHelpers/dbhelper.cpp
+    sources/DBHelpers/dbcrud.cpp
+    #__________Controllers____________
+    sources/controllers/controller.cpp
     #____________Models______________
     sources/models/tableModel.cpp
     #______________UI________________
@@ -38,18 +35,19 @@ set(PROJECT_SOURCES
     #_________________________________________
     #___________Headers_______________________
     headers/client.h
-    headers/dispatcher.h
-    headers/utils.h
-    headers/dbhelper.h
-    headers/controller.h
-    headers/localOpcode.h
-    headers/serverOpcode.h
-    #___________ICommand_____________
-    headers/icommand/icommand.h
-    headers/icommand/registry.h
-    headers/icommand/login.h
-    headers/icommand/get.h
-    headers/icommand/update.h
+    #___________DBHelpers____________
+    headers/DBHelpers/dbhelper.h
+    headers/DBHelpers/dbcrud.h
+    #__________Controllers____________
+    headers/controllers/controller.h
+    #_____________Utils_______________
+    headers/utils/utils.h
+    headers/utils/packetQueryStructure.h
+    headers/utils/serverQueryStructure.h
+    headers/utils/serverResponseStructure.h
+    #___________OpCodes______________
+    headers/OpCodes/localOpcode.h
+    headers/OpCodes/serverOpcode.h
     #____________Models______________
     headers/models/tableModel.h
     #______________UI________________
@@ -72,6 +70,11 @@ endif()
 
 target_include_directories(client PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/DBHelpers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/dispatchers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/controllers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/OpCodes
     ${CMAKE_CURRENT_SOURCE_DIR}/headers/icommand
 )
 

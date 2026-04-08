@@ -1,17 +1,22 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include <QWidget>
+#include <QObject>
+#include <QAbstractSocket>
 #include <QTcpSocket>
-#include <QtEndian>
+#include <QTimer>
 
-class Client: public QWidget {
+class Client final : public QObject {
     Q_OBJECT
 public:
-    explicit Client(const quint16 portNum, const QString& serveraddress, QWidget* parent = nullptr);
+    explicit Client(const quint16 portNum, const QString& serverAddress, QObject* parent = nullptr);
     ~Client() = default;
 
-    void sendPacket(const QByteArray& packet);
+    void sendPacket(const QByteArray& clientPacket);
+
+    bool connected() {
+        return m_serverSocket->state() == QAbstractSocket::ConnectedState;
+    }
 
 private slots:
     void onReadyRead();
@@ -23,10 +28,11 @@ signals:
     void packetReady(QByteArray rawData);
 
 private:
-    QTcpSocket* m_serverSocket;
-    QByteArray  m_buffer;           //accumulator
-    QString     m_serverAddress;    //"127.0.0.1"
-    quint16     m_portNum;          //5555
+    QTcpSocket* m_serverSocket = nullptr;
+    bool m_reconnecting;        //if we watn to reconnecting
+    QByteArray m_buffer;        //accumulator packets
+    QString m_serverAddress;    //"127.0.0.1"
+    quint16 m_portNum;          //5555
 };
 
 #endif // CLIENT_H
