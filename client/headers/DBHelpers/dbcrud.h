@@ -4,7 +4,7 @@
 #include <QString>
 
 #include "dbhelper.h"
-#include "../headers/utils/queryStructure.h"
+#include "../headers/utils/serverQueryStructure.h"
 
 using namespace PacketStructure;
 

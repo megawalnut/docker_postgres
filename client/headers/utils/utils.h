@@ -83,8 +83,10 @@ namespace Utils {
             QVariant value;
             while(!payloadStream.atEnd()) {
                 payloadStream >> key >> value;
-                if(payloadStream.status() != QDataStream::Ok)
-                    break;
+                if (payloadStream.status() != QDataStream::Ok) {
+                    qWarning() << "Payload stream error";
+                    return {0, {}};
+                }
                 deserializePacket.insert(key, value);
             }
             qDebug() << "Deserialize::success";

@@ -5,7 +5,6 @@
 
 enum class ServerOpcode : uint32_t {
     Unknown = 0,
-    Users,
     Login,
     Registry,
     Sync,

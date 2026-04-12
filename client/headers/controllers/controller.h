@@ -6,8 +6,8 @@
 
 #include "client.h"
 
-#include "serverOpcode.h"
-#include "localOpcode.h"
+#include "../OpCodes/serverOpcode.h"
+#include "../OpCodes/localOpcode.h"
 
 #include "utils/serverQueryStructure.h"
 #include "utils/serverResponseStructure.h"
@@ -62,10 +62,9 @@ public slots:
     void onRollback();
     void onSignIn(const QString userName, QString hashPass);
     void onSignUp(const QString userName, QString hashPass);
+    void onFullDump();
 
     //receive command from server
-    void onLoginFromServer(const QVariantMap& packet);
-    void onRegistryFromServer(const QVariantMap& packet);
     void onSyncFromServer(const QVariantMap& packet);
     void onRollbackFromServer(const QVariantMap& packet);
     void onFullDumpFromServer(const QVariantMap& packet);

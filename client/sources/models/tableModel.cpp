@@ -5,7 +5,6 @@ uint32_t TableModel::counter = 0;
 TableModel::TableModel(QObject *parent) : QAbstractTableModel{parent} {}
 
 int TableModel::rowCount(const QModelIndex &parent) const {
-    qDebug() << "TableData::rowCount";
     if (parent.isValid()) {
         qWarning() << "TableModel::rowCount:: Invalid row";
         return 0;
@@ -14,7 +13,6 @@ int TableModel::rowCount(const QModelIndex &parent) const {
 }
 
 int TableModel::columnCount(const QModelIndex &parent) const {
-    qDebug() << "TableData::columnCount";
     if (parent.isValid()) {
         qWarning() << "TableModel::columnCount:: Invalid row";
         return 0;
@@ -23,7 +21,6 @@ int TableModel::columnCount(const QModelIndex &parent) const {
 }
 
 QVariant TableModel::data(const QModelIndex &index, int role) const {
-    qDebug() << "TableData::data";
     if (!index.isValid()) {
         qWarning() << "TableData::data: Invalid index";
         return {};
@@ -45,9 +42,9 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
     case Column::Id: return item.id;
     case Column::Type: {
         switch (item.type) {
-        case Car: return "Car";
-        case Boat: return "Boat";
-        case Bicycle: return "Bicycle";
+        case Type::Car: return "Car";
+        case Type::Boat: return "Boat";
+        case Type::Bicycle: return "Bicycle";
         default: return "Unknown";
         }
     }
@@ -61,7 +58,6 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
 }
 
 QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const {
-    qDebug() << "TableModel::headerData";
     if (role != Qt::DisplayRole) {
         qWarning() << "TableData::headerData: Invalid role";
         return {};
@@ -141,7 +137,7 @@ QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVa
                      index(selectedRow, selectedCol),
                      {Qt::EditRole});
 
-    m_dataChanged = AppContext::SyncState::Synced;
+    m_dataChanged = AppContext::SyncState::Unsynced;
     emit syncStateChanged(m_dataChanged);
 
     data["id"] = item.id;

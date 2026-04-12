@@ -16,21 +16,42 @@ void ClientConnection::onReadyRead() {
     m_buffer.append(m_clientSocket->readAll());
 
     //if received a part of the package < 4b
-    while(m_buffer.size() >= sizeof(uint32_t)) {
-        const uint32_t realPackageSize = Utils::Packet::getSize(m_buffer);
-        //if received a part of the package
-        if(m_buffer.size() < realPackageSize)
-            break; //wait full packet
+    while(m_buffer.size() >= MIN_PACKET_PART) {
+        uint32_t realPackageSize;
+        QDataStream stream(&m_buffer, QIODevice::ReadOnly);
 
-        qDebug() << "ClientConnection::success";
-        qDebug() << QString("The package came from a %1 : %2")
-                            .arg(m_clientSocket->peerAddress().toString())
-                            .arg(m_clientSocket->peerPort());
+        stream.setVersion(QDataStream::Qt_6_0);
+        stream.setByteOrder(QDataStream::ByteOrder::LittleEndian);
+
+        // first 4 bytes - real package size(See also: utiils::structure_packet)
+        stream >> realPackageSize;
+
+        if (realPackageSize > MAX_PACKET_SIZE) {
+            qWarning() << "Client::onReadyRead: Too big packet";
+            m_buffer.clear();
+            return;
+        }
+
+        //if received a part of the package
+        if(m_buffer.size() < realPackageSize) {
+            break; //wait full packet
+        }
+
+        if (realPackageSize < MIN_PACKET_SIZE) {
+            qWarning() << "Client::onReadyRead: Invalid packet";
+            m_buffer.clear();
+            return;
+        }
+
+        qDebug() << QString("Client::onReadyRead: The package came from a %1:%2")
+                        .arg(m_serverAddress)
+                        .arg(m_portNum);
+
+
         QByteArray acceptedPackage = m_buffer.left(realPackageSize);   //package data
         m_buffer.remove(0, realPackageSize);
-        std::pair<const uint32_t, QVariantMap> data = Utils::Packet::deserialize(acceptedPackage);
-        QByteArray receivedPacket = Dispatcher::instance()->dispatch(data.first, std::move(data.second));
-        onPacketReady(receivedPacket);
+
+        onPacketReady(acceptedPackage);
     }
 }
 

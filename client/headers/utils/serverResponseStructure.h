@@ -3,7 +3,6 @@
 
 #include <QString>
 #include <QVariantList>
-#include <QVariantList>
 
 #include "packetQueryStructure.h"
 
@@ -12,9 +11,11 @@ namespace ServerResponseKeys {
     inline const QString TableName = "tableName";
     inline const QString Tables = "tables";
     inline const QString UserName = "userName";
-    inline const QString UserId = "userId";
     inline const QString Changes = "changes";
     inline const QString State = "state";
+    inline const QString Snapshot = "snapshot";
+    inline const QString Users = "users";
+    inline const QString UserId = "userId";
 }
 
 namespace ServerResponseStructure {
@@ -22,53 +23,40 @@ namespace ServerResponseStructure {
         Success = 0,
         Failed
     };
-    enum class SyncStatus {
-        Insert = 0,
-        Update,
-        Remove,
-        Clear,
-        BulkInsert
-    };
     struct Sync {
-        SyncStatus syncStatus;
-        std::variant<PacketStructure::Insert,
-                     PacketStructure::Update,
-                     PacketStructure::Remove,
-                     PacketStructure::Clear,
-                     PacketStructure::BulkInsert> changes;
+        QString tableName;
+        QVariantList changes;
 
         QVariantMap toMap() const {
-            qDebug() << "ServerResponseStructure::Sync:toMap";
             return QVariantMap {
-                {ServerResponseKeys::State, static_cast<int>(syncStatus)},
+                {ServerResponseKeys::TableName, tableName},
                 {ServerResponseKeys::Changes, changes}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
-            qDebug() << "ServerResponseStructure::Sync:fromMap";
-            syncStatus = static_cast<SyncStatus>(map.value(ServerResponseKeys::State).toInt());
-            changes = map.value(ServerResponseKeys::Changes).toMap();
-        };
+            tableName = map.value(ServerResponseKeys::TableName).toString();
+            changes = map.value(ServerResponseKeys::Changes).toList();
+        }
     };
     struct Rollback {
-        int userId = -1;
         QString tableName;
+        PacketStructure::BulkInsert snapshot;
 
         QVariantMap toMap() const {
             return QVariantMap {
-                {ServerResponseKeys::UserId, userId},
-                {ServerResponseKeys::TableName, tableName}
+                {ServerResponseKeys::TableName, tableName},
+                {ServerResponseKeys::Snapshot, snapshot.toMap()}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
-            userId = map.value(ServerResponseKeys::UserId).toInt();
             tableName = map.value(ServerResponseKeys::TableName).toString();
-        };
+            snapshot.fromMap(map.value(ServerResponseKeys::Snapshot).toMap());
+        }
     };
     struct Auth {
-        int userId = -1;
+        int userId;
         QString userName;
         QSet<QString> tables;
         Status result;
@@ -81,7 +69,7 @@ namespace ServerResponseStructure {
                 {ServerResponseKeys::Tables, list},
                 {ServerResponseKeys::Result,  static_cast<int>(result)}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             userId = map.value(ServerResponseKeys::UserId).toInt();
@@ -92,26 +80,38 @@ namespace ServerResponseStructure {
             for(const auto& name : map.value(ServerResponseKeys::Tables).toStringList()) {
                 tables.insert(name);
             };
-        };
+        }
     };
     struct FullDump {
-        int userId = -1;
-        QString tableName;
+        QStringList users;
+        QList<PacketStructure::BulkInsert> tables;
 
         QVariantMap toMap() const {
+            QVariantList tablesList;
+
+            for (const auto& t : tables) {
+                tablesList.append(t.toMap());
+            }
+
             return QVariantMap {
-                {ServerResponseKeys::UserId, userId},
-                {ServerResponseKeys::TableName, tableName}
+                {ServerResponseKeys::Users, users},
+                {ServerResponseKeys::Tables, tablesList}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
-            userId = map.value(ServerResponseKeys::UserId).toInt();
-            tableName = map.value(ServerResponseKeys::TableName).toString();
-        };
-    };
-    struct Users {
+            users = map.value(ServerResponseKeys::Users).toStringList();
 
+            tables.clear();
+
+            QVariantList list = map.value(ServerResponseKeys::Tables).toList();
+
+            for (const auto& item : list) {
+                PacketStructure::BulkInsert t;
+                t.fromMap(item.toMap());
+                tables.append(t);
+            }
+        }
     };
 }
 

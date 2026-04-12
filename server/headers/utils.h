@@ -6,60 +6,93 @@
 #include <QIODevice>
 #include <QDataStream>
 
+constexpr uint32_t MAX_PACKET_SIZE = 10 * 1024 * 1024;
+constexpr uint32_t MIN_PACKET_SIZE = sizeof(uint32_t) * 2;  //just minimal packetSize
+constexpr uint32_t MIN_PACKET_PART = sizeof(uint32_t);  //minimal size(bytes) for read 'packetSize'
+
+
 //namespace for additional functions
 namespace Utils {
-    // class - structure of packet
-    // structure packet
-    // |- size -|- opcode -|- data -|
-    class Packet final {
-    public:
-        //static serialize
-        Packet() = delete;
+// class - structure of packet
+// structure packet
+// |- size -|- opcode -|- data -|
+class Packet final {
+public:
+    //static serialize
+    Packet() = delete;
+    static inline QByteArray serialize(uint32_t opcode, const QVariantMap& sendedPacket) {
+        qDebug() << "Utils::serialize started";
+        QByteArray payload; //for calculating size packet(with |- size -|- opcode -|- data -|)
 
-        static QByteArray serialize(uint32_t opcode, const QVariantMap& packet) {
-            QByteArray serializePacket; //for calculating size packet(with |- size -|- opcode -|- data -|)
-            QDataStream out(&serializePacket, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_6_0);
+        QDataStream payloadStream(&payload, QIODevice::WriteOnly);
+        payloadStream.setVersion(QDataStream::Qt_6_0);
+        payloadStream.setByteOrder(QDataStream::ByteOrder::LittleEndian);
 
-            uint32_t size = 0;
-            out << size << opcode << packet;
-
-            size = serializePacket.size();
-
-            // fix size
-            QDataStream fix(&serializePacket, QIODevice::WriteOnly);
-            fix.setVersion(QDataStream::Qt_6_0);
-
-            //rewriting start 'serializePacket'!!
-            fix << size;
-
-            return serializePacket;
+        for(auto it = sendedPacket.constBegin(); it != sendedPacket.constEnd(); ++it) {
+            payloadStream << it.key() << it.value();
         }
 
-        //static deserialize
-        static std::pair<uint32_t, QVariantMap>deserialize(const QByteArray& accepdedPacket/*checksum*/) {
-            QVariantMap deserializePacket;
-            QDataStream in(accepdedPacket);
-            in.setVersion(QDataStream::Qt_6_0);
+        //result size packet
+        uint32_t sizePacket = payload.size() + MIN_PACKET_SIZE;
 
-            uint32_t opcode;
-            uint32_t size;  //size packet(with |- size -|- opcode -|- data -|)
+        QByteArray serializePacket;
 
-            in >> size >> opcode >> deserializePacket; //size dont used, maybe will need later
+        QDataStream out(&serializePacket, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_6_0);
+        out.setByteOrder(QDataStream::ByteOrder::LittleEndian);
 
-            qDebug() << "Deserialize::success";
-            return {opcode, deserializePacket};
+        out << sizePacket << opcode;
+        out.writeRawData(payload.constData(), payload.size());
+
+        qDebug() << "Serialize::success";
+
+        return serializePacket;
+    }
+
+    //static deserialize
+    static inline std::pair<uint32_t, QVariantMap> deserialize(const QByteArray& accepdedPacket/*checksum*/) {
+        qDebug() << "Utils::deserialize started";
+        QVariantMap deserializePacket;
+
+        QDataStream in(accepdedPacket);
+        in.setVersion(QDataStream::Qt_6_0);
+        in.setByteOrder(QDataStream::ByteOrder::LittleEndian);
+
+        uint32_t opcode;
+        uint32_t size;  //size packet(with |- size -|- opcode -|- data -|)
+
+        in >> size >> opcode; //size dont used, maybe will need later
+
+        if (size != accepdedPacket.size()) {
+            qWarning() << "Packet size mismatch!";
+            return {0, {}};
         }
 
-        static inline uint32_t getSize(const QByteArray& accepdedPacket) {
-            uint32_t size;
-            QDataStream in(accepdedPacket);
-            in.setVersion(QDataStream::Qt_6_0);
-            if(in.status() != QDataStream::Ok)
-                return 0;
-            in >> size;
-            return size;
+        if (size > MAX_PACKET_SIZE) {
+            qWarning() << "Packet too big!";
+            return {0, {}};
         }
-    };
+
+        QByteArray payload = accepdedPacket.mid(MIN_PACKET_SIZE);  // size + opcode
+
+        QDataStream payloadStream(payload);
+        payloadStream.setVersion(QDataStream::Qt_6_0);
+        payloadStream.setByteOrder(QDataStream::ByteOrder::LittleEndian);
+
+        QString key;
+        QVariant value;
+        while(!payloadStream.atEnd()) {
+            payloadStream >> key >> value;
+            if (payloadStream.status() != QDataStream::Ok) {
+                qWarning() << "Payload stream error";
+                return {0, {}};
+            }
+            deserializePacket.insert(key, value);
+        }
+        qDebug() << "Deserialize::success";
+
+        return {opcode,deserializePacket};
+    }
+};
 }
 #endif // PACKET_H

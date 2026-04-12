@@ -4,6 +4,8 @@
 #include "utils.h"
 #include "../appContext.h"
 
+#include "../DBHelpers/dbcrud.h"
+
 Controller::Controller(Client* client,
                        TableModel* table,
                        const QStringList& users,
@@ -11,13 +13,17 @@ Controller::Controller(Client* client,
     :
     QObject{parent},
     m_client(client),
-    m_db(std::make_unique<DBCRUD>(PATH))
+    m_db(std::make_unique<DBCRUD>())
 {
     qDebug() << "Controller::Controller";
 
     setupConnections();
     setTableModel(table);
     setUsersModel(users);
+}
+
+namespace ListChanges {
+    inline const QString Id = "id";
 }
 
 // ------------------------------- COMMANDS FROM SERVER ------------------------------------
@@ -39,14 +45,14 @@ void Controller::onSync() {
         return;
     }
 
-    ServerPacketStructure::Sync data;
+    ServerQueryStructure::Sync data;
     data.userId = AppContext::instance().currentUser.userId;
     data.tableName = m_currentTableName;
 
     QVariantList changes;
     for(const auto& change : m_listChanges) {
         QVariantMap action = change.data;
-        action["op"] = static_cast<uint32_t>(change.op);
+        action[ServerQueryKeys::Operation] = static_cast<uint32_t>(change.op);
         changes.append(action);
     }
 
@@ -63,7 +69,7 @@ void Controller::onRollback() {
         return;
     }
 
-    ServerPacketStructure::Rollback data;
+    ServerQueryStructure::Rollback data;
     data.userId = AppContext::instance().currentUser.userId;
     data.tableName = m_currentTableName;
 
@@ -78,7 +84,7 @@ void Controller::onSignIn(const QString userName, const QString rawPass) {
         return;
     }
 
-    ServerPacketStructure::Auth data;
+    ServerQueryStructure::Auth data;
     data.userName = userName;
     data.userPass = hashPassword(rawPass);
 
@@ -93,11 +99,21 @@ void Controller::onSignUp(const QString userName, const QString rawPass) {
         return;
     }
 
-    ServerPacketStructure::Auth data;
+    ServerQueryStructure::Auth data;
     data.userName = userName;
     data.userPass = hashPassword(rawPass);
 
     QByteArray packet = Utils::Packet::serialize(static_cast<uint32_t>(ServerOpcode::Registry), data.toMap());
+
+    m_client->sendPacket(packet);
+}
+void Controller::onFullDump() {
+    qDebug() << "Controller::onSignUp";
+    if (!m_client) {
+        qWarning() << "Controller::onSignUp: Invalid client";
+        return;
+    }
+    QByteArray packet = Utils::Packet::serialize(static_cast<uint32_t>(ServerOpcode::FullDump), {});
 
     m_client->sendPacket(packet);
 }
@@ -113,7 +129,7 @@ void Controller::onInsertRow() {
     int id = m_currentTable->insertRow();
     emit dataChanged();
 
-    m_listChanges.append({ LocalOpcode::Insert, QVariantMap{{"id", id}} });
+    m_listChanges.append({ LocalOpcode::Insert, QVariantMap{{ListChanges::Id, id}} });
     emit statusChanged();
 }
 void Controller::onDeleteRow(int selectedRow) {
@@ -131,7 +147,7 @@ void Controller::onDeleteRow(int selectedRow) {
     int id = m_currentTable->deleteRow(selectedRow);
     emit dataChanged();
 
-    m_listChanges.append({ LocalOpcode::Delete, QVariantMap{{"id", id}} });
+    m_listChanges.append({ LocalOpcode::Delete, QVariantMap{{ListChanges::Id, id}} });
     emit statusChanged();
 }
 void Controller::onChangeField(int selectedRow, int selectedCol, QVariant value) {
@@ -164,12 +180,17 @@ void Controller::onUpdateTable(const QString userName) {
         return;
     }
 
+    if (!m_tables.contains(userName)) {
+        qWarning() << "Table not found:" << userName;
+        return;
+    }
+
     if (m_currentTable == m_tables[userName]) {
         qWarning() << "Controller::onUpdateTable: Current table == set table";
         return;
     }
 
-    m_currentTable = m_tables[userName];
+    m_currentTable = m_tables.value(userName);
     m_currentTableName = m_currentTable->getTableName();
 
     emit currentModelChanged(m_currentTable);
@@ -180,41 +201,97 @@ void Controller::onUpdateTable(const QString userName) {
 // ------------------------------ LOCAL COMMANDS TO UI -------------------------------------
 void Controller::onFullDumpFromServer(const QVariantMap& packet) {
     qDebug() << "Controller::onFullDumpFromServer";
-    m_db->clear({{"table", "users"}});
+    if (!m_client) {
+        qWarning() << "Controller::onFullDumpFromServer: Invalid client";
+        return;
+    }
 
-    QVariantList data = packet["data"].toList();
-    m_db->bulkInsert("users", data);
+    ServerResponseStructure::FullDump data;
+    data.fromMap(packet);
+
+    m_users = data.users;
+
+    for(const auto& table : data.tables) {
+        m_db->clear(Clear{table.tableName});
+        m_db->bulkInsert(table);
+    }
 
     m_listChanges.clear();
     emit statusChanged();
 }
 void Controller::onRollbackFromServer(const QVariantMap& packet) {
     qDebug() << "Controller::onRollbackFromServer";
-    m_db->clear({{"table", "users"}});
+    if (!m_client) {
+        qWarning() << "Controller::onRollbackFromServer: Invalid client";
+        return;
+    }
 
-    QVariantList snapshot = packet["snapshot"].toList();
-    m_db->bulkInsert("users", snapshot);
+    ServerResponseStructure::Rollback data;
+    data.fromMap(packet);
+
+    m_db->clear(Clear{data.tableName});
+
+    m_db->bulkInsert(data.snapshot);
 
     m_listChanges.clear();
     emit statusChanged();
 }
 void Controller::onSyncFromServer(const QVariantMap& packet) {
     qDebug() << "Controller::onSyncFromServer";
-    QVariantList changes = packet["changes"].toList();
+    if (!m_client) {
+        qWarning() << "Controller::onSyncFromServer: Invalid client";
+        return;
+    }
 
-    for (const auto& c : changes) {
+    ServerResponseStructure::Sync data;
+    data.fromMap(packet);
+
+    for (const auto& c : data.changes) {
         QVariantMap change = c.toMap();
 
-        QString type = change["type"].toString();
+        PacketStructure::Structures op = static_cast<PacketStructure::Structures>(change.value(ServerQueryKeys::Operation).toInt());
 
-        if (type == "insert")
-            m_db->insert(change);
+        switch (op) {
+        case PacketStructure::Structures::InsertEnum: {
+            PacketStructure::Insert v;
+            v.fromMap(change);
+            m_db->insert(v);
+            break;
+        }
+        case PacketStructure::Structures::UpdateEnum: {
+            PacketStructure::Update v;
+            v.fromMap(change);
+            m_db->update(v);
+            break;
+        }
+        case PacketStructure::Structures::RemoveEnum: {
+            PacketStructure::Remove v;
+            v.fromMap(change);
+            m_db->remove(v);
+            break;
+        }
+        case PacketStructure::Structures::ClearEnum: {
+            PacketStructure::Clear v;
+            v.fromMap(change);
+            m_db->clear(v);
+            break;
+        }
+        case PacketStructure::Structures::BulkInsertEnum: {
+            PacketStructure::BulkInsert v;
+            v.fromMap(change);
+            m_db->bulkInsert(v);
+            break;
+        }
+        default: {
+            qWarning() << "Unknown operation:";
+            break;
+        }
+        }
+    }
 
-        else if (type == "update")
-            m_db->update(change);
 
-        else if (type == "delete")
-            m_db->remove(change);
+    if (m_currentTable) {
+        m_currentTable->setSyncState(AppContext::SyncState::Synced);
     }
 
     m_listChanges.clear();
@@ -285,6 +362,7 @@ void Controller::loginOrReg(const QVariantMap& packet, bool isLogin) {
         emit currentUserChanged(client.userName);
         emit authSuccess(isLogin, client.userName);
         emit statusChanged();
+        onFullDump();
         qDebug() << "Controller::loginOrReg: Success";
         break;
     }
@@ -320,20 +398,20 @@ void Controller::setTableModel(TableModel* data) {
     emit statusChanged();
 }
 void Controller::setUsersModel(const QStringList& data) {
-    qDebug() << "Controller::setTableModel";
+    qDebug() << "Controller::setUsersModel";
     m_users = data;
 
     emit usersChanged(m_users);
 }
 void Controller::setCurrentUser(const QString& name) {
-    qDebug() << "Controller::setTableModel";
-    m_currentUser = name;
+    qDebug() << "Controller::setCurrentUser";
+    AppContext::instance().currentUser.userName = name;
 
-    emit currentUserChanged(m_currentUser);
+    emit currentUserChanged(AppContext::instance().currentUser.userName);
     emit statusChanged();
 }
 int Controller::getStatus() const {
-    qDebug() << "Controller::setTableModel";
+    qDebug() << "Controller::getStatus";
     return m_currentTable ? static_cast<int>(m_currentTable->getSyncState())
                           : static_cast<int>(AppContext::SyncState::Unknown);
 }

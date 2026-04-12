@@ -6,27 +6,22 @@
 
 constexpr uint32_t PORTNUM = 5555;
 const QString ADDRESS = "127.0.0.1";
-const QString PATH = "/home/mikhail/projs/pet_proj_1/client";
+const QString PATH = "/home/mikhail/projs/pet_proj_1/client/app.db";
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
-    Client* client = new Client(PORTNUM,  // port
-                                ADDRESS);    // host
+    auto* client = new Client(PORTNUM, ADDRESS);
 
-    AppContext::instance().init(-1, "a", {});  //TODO
+    AppContext::instance().init(-1, "", {});
 
-    TableModel* table = new TableModel();
-    QStringList list = { "user1", "user2", "user3" };
-
-    Controller* controller = new Controller(client, table, list);
+    auto* table = new TableModel();
+    auto* controller = new Controller(client, table, {});
 
     table->setParent(controller);
 
     MainWindow w(controller);
-
     w.show();
 
-    delete client;
     return a.exec();
 }

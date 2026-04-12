@@ -5,14 +5,22 @@
 #include <QVariantList>
 
 namespace PacketQueryKeys {
-inline const QString TableName = "tableName";
-inline const QString Columns = "columns";
-inline const QString Values = "values";
-inline const QString RowId = "rowId";
-inline const QString Rows = "rows";
+    inline const QString TableName = "tableName";
+    inline const QString Columns = "columns";
+    inline const QString Values = "values";
+    inline const QString RowId = "rowId";
+    inline const QString Rows = "rows";
 }
 
 namespace PacketStructure {
+    enum Structures{
+        Unknown = 0,
+        InsertEnum,
+        UpdateEnum,
+        RemoveEnum,
+        ClearEnum,
+        BulkInsertEnum
+    };
     struct Insert {
         QString tableName;
         QStringList columns;
@@ -24,13 +32,13 @@ namespace PacketStructure {
                 {PacketQueryKeys::Columns, columns},
                 {PacketQueryKeys::Values, values}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketQueryKeys::TableName).toString();
             columns = map.value(PacketQueryKeys::Columns).toStringList();
             values = map.value(PacketQueryKeys::Values).toList();
-        };
+        }
     };
     struct Update {
         int rowId = -1;
@@ -45,14 +53,14 @@ namespace PacketStructure {
                 {PacketQueryKeys::Values, values},
                 {PacketQueryKeys::RowId, rowId},
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketQueryKeys::TableName).toString();
             columns = map.value(PacketQueryKeys::Columns).toStringList();
             values = map.value(PacketQueryKeys::Values).toList();
             rowId = map.value(PacketQueryKeys::RowId).toInt();
-        };
+        }
     };
     struct Remove {
         int rowId = -1;
@@ -63,12 +71,12 @@ namespace PacketStructure {
                 {PacketQueryKeys::TableName, tableName},
                 {PacketQueryKeys::RowId, rowId}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketQueryKeys::TableName).toString();
             rowId = map.value(PacketQueryKeys::RowId).toInt();
-        };
+        }
     };
     struct Clear {
         QString tableName;
@@ -77,11 +85,11 @@ namespace PacketStructure {
             return QVariantMap {
                 {PacketQueryKeys::TableName, tableName}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketQueryKeys::TableName).toString();
-        };
+        }
     };
     struct BulkInsert {
         QString tableName;
@@ -89,13 +97,16 @@ namespace PacketStructure {
         QVector<QVariantList> rows;
 
         QVariantMap toMap() const {
-            QVariantList list = QVariantList(rows.cbegin(), rows.cend());
+            QVariantList list;
+            for (const auto& r : rows)
+                list.append(r);
+
             return QVariantMap {
                 {PacketQueryKeys::TableName, tableName},
                 {PacketQueryKeys::Columns, columns},
                 {PacketQueryKeys::Rows, list}
             };
-        };
+        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketQueryKeys::TableName).toString();
@@ -105,7 +116,7 @@ namespace PacketStructure {
             for(const auto& row : map.value(PacketQueryKeys::Rows).toList()) {
                 rows.push_back(row.toList());
             };
-        };
+        }
     };
 }
 

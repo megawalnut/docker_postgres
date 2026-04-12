@@ -36,7 +36,7 @@ bool DBCRUD::insert(const Insert& data) {
 
 bool DBCRUD::update(const Update& data) {
     if(data.tableName.isEmpty() ||
-        data.RowId == -1)
+        data.rowId == -1)
     {
         qWarning() << "DBCRUD::update: Missing fields";
         return false;
@@ -67,7 +67,7 @@ bool DBCRUD::update(const Update& data) {
 
 bool DBCRUD::remove(const Remove& data) {
     if(data.tableName.isEmpty() ||
-        data.RowId == -1)
+        data.rowId == -1)
     {
         qWarning() << "DBCRUD::remove: Missing fields";
         return false;
@@ -82,7 +82,7 @@ bool DBCRUD::remove(const Remove& data) {
 
     QString sql = QString("DELETE FROM %1 WHERE id=?").arg(data.tableName);
 
-    auto [success, _] = m_db.send(sql, {data.RowId});
+    auto [success, _] = m_db.send(sql, {data.rowId});
 
     if (!success) {
         qWarning() << "DBCRUD::remove: Query failed";
