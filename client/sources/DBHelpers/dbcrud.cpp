@@ -1,8 +1,8 @@
 #include "dbcrud.h"
 #include "../appContext.h"
 
-DBCRUD::DBCRUD() : m_db{AppContext::instance().db()} {}
-
+DBCRUD::DBCRUD() : m_db(AppContext::instance().db()) {}
+// -------------------------------------- CRUD ---------------------------------------------
 bool DBCRUD::insert(const Insert& data) {
     if(data.tableName.isEmpty())
     {
@@ -12,6 +12,7 @@ bool DBCRUD::insert(const Insert& data) {
 
     const auto& client = AppContext::instance();
 
+    //check the privileges
     if(!client.currentUser.tables.contains(data.tableName)) {
         qWarning() << "DBCRUD::insert: Permission denied";
         return false;
@@ -33,19 +34,19 @@ bool DBCRUD::insert(const Insert& data) {
 
     return success;
 }
-
-bool DBCRUD::update(const Update& data) {
+bool DBCRUD::change(const Change& data) {
     if(data.tableName.isEmpty() ||
         data.rowId == -1)
     {
-        qWarning() << "DBCRUD::update: Missing fields";
+        qWarning() << "DBCRUD::change: Missing fields";
         return false;
     }
 
     const auto& client = AppContext::instance();
 
+    //check the privileges
     if(!client.currentUser.tables.contains(data.tableName)) {
-        qWarning() << "DBCRUD::update: Permission denied";
+        qWarning() << "DBCRUD::change: Permission denied";
         return false;
     }
 
@@ -59,12 +60,11 @@ bool DBCRUD::update(const Update& data) {
     auto [success, _] = m_db.send(sql, data.values);
 
     if (!success) {
-        qWarning() << "DBCRUD::update: Query failed";
+        qWarning() << "DBCRUD::change: Query failed";
     }
 
     return success;
 }
-
 bool DBCRUD::remove(const Remove& data) {
     if(data.tableName.isEmpty() ||
         data.rowId == -1)
@@ -75,6 +75,7 @@ bool DBCRUD::remove(const Remove& data) {
 
     const auto& client = AppContext::instance();
 
+    //check the privileges
     if(!client.currentUser.tables.contains(data.tableName)) {
         qWarning() << "DBCRUD::remove: Permission denied";
         return false;
@@ -90,17 +91,18 @@ bool DBCRUD::remove(const Remove& data) {
 
     return success;
 }
-
-bool DBCRUD::clear(const Clear& data) {
-    if(data.tableName.isEmpty())
-    {
+bool DBCRUD::clear(const Clear& data, bool isFullDump) {
+    if(data.tableName.isEmpty()) {
         qWarning() << "DBCRUD::clear: Missing fields";
         return false;
     }
 
     const auto& client = AppContext::instance();
 
-    if(!client.currentUser.tables.contains(data.tableName)) {
+    //check the privileges
+    //skip privileges, only for full dump
+    //fulldump calling only after connectiong/reconnecting
+    if(!client.currentUser.tables.contains(data.tableName) && !isFullDump) {
         qWarning() << "DBCRUD::clear: Permission denied";
         return false;
     }
@@ -115,13 +117,21 @@ bool DBCRUD::clear(const Clear& data) {
 
     return success;
 }
-
-bool DBCRUD::bulkInsert(const BulkInsert& data) {
+bool DBCRUD::bulkInsert(const BulkInsert& data, bool isFullDump) {
     if(data.tableName.isEmpty() ||
         data.rows.isEmpty() ||
         data.columns.isEmpty())
     {
         qWarning() << "DBCRUD::bulkInsert: Missing fields";
+        return false;
+    }
+
+    const auto& client = AppContext::instance();
+
+    //check the privileges
+    //skip privileges, only for full dump
+    if(!client.currentUser.tables.contains(data.tableName) && !isFullDump) {
+        qWarning() << "DBCRUD::bulkInsert: Permission denied";
         return false;
     }
 
@@ -135,6 +145,7 @@ bool DBCRUD::bulkInsert(const BulkInsert& data) {
     for (const auto& row : data.rows) {
         QStringList setParts;
         for (const auto& col : data.columns) {
+            Q_UNUSED(col);
             setParts << "?";
         }
 
@@ -157,3 +168,21 @@ bool DBCRUD::bulkInsert(const BulkInsert& data) {
 
     return true;
 }
+// -----------------------------------------------------------------------------------------
+// -------------------------------------- OTHER --------------------------------------------
+DBCRUD::SyncState DBCRUD::getStatus() const {
+    return m_currentStatus;
+}
+void DBCRUD::setStatus(SyncState status) {
+    m_currentStatus = static_cast<SyncState>(status);
+}
+void DBCRUD::clearChanges() {
+    m_listChanges.clear();
+}
+void DBCRUD::addChange(const Operation& data) {
+    m_listChanges.append(data);
+}
+QList<DBCRUD::Operation> DBCRUD::getChanges() const {
+    return m_listChanges;
+}
+// -----------------------------------------------------------------------------------------

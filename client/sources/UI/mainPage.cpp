@@ -2,7 +2,11 @@
 
 #include "../UI/mainPage.h"
 
-MainPage::MainPage(Controller* controller, QWidget *parent) : QWidget{parent}, m_controller{controller} {
+MainPage::MainPage(Controller* controller, QWidget *parent)
+    :
+    m_controller{controller},
+    QWidget{parent}
+{
     qDebug() << "MainPage::MainPage";
     init();
     setMinimumSize(638, 400);
@@ -80,7 +84,7 @@ void MainPage::init() {
 
         main->addLayout(taskbar);
 
-        setStatus(AppContext::SyncState::Unknown);
+        setStatus(SyncState::Unknown);
     }
 }
 
@@ -91,8 +95,9 @@ void MainPage::setTableModel(TableModel* data) {
 
     m_records = data;
 
-    if (m_tableView && m_records)
+    if (m_tableView && m_records) {
         m_tableView->setModel(m_records);
+    }
 }
 
 void MainPage::setUserModel(const QStringList& data) {
@@ -128,8 +133,7 @@ void MainPage::setCurrentUser(const QString& user) {
     }
 }
 
-void MainPage::setStatus(AppContext::SyncState status) {
-    qDebug() << "MainPage::setStatus";
+void MainPage::setStatus(SyncState status) {
     switch(status) {
     case SyncState::Unsynced:
         m_status->setText("🔴 Unsynced");
@@ -154,7 +158,6 @@ void MainPage::setStatus(AppContext::SyncState status) {
 }
 
 void MainPage::setStatusUser() {
-    qDebug() << "MainPage::onCurrentUserChanged";
     if(m_userNames->currentText() == m_currentUserName) {
         m_currentUser->setStyleSheet("color: green;");
     } else {
@@ -163,32 +166,30 @@ void MainPage::setStatusUser() {
 }
 
 void MainPage::setupConnections() {
-    qDebug() << "MainPage::setupConnections";
-
     //sync table
     connect(m_sync, &QPushButton::clicked,
             this, [this]() {
-                bool responce = QMessageBox::question(
-                                    this,
-                                    "Syncronize",
-                                    "Are you sure you want to synchronize?",
-                                    QMessageBox::Yes | QMessageBox::No
-                                    ) == QMessageBox::Yes;
-                if(responce)
+        bool responce = QMessageBox::question(
+                            this,
+                            "Syncronize",
+                            "Are you sure you want to synchronize?",
+                            QMessageBox::Yes | QMessageBox::No)  == QMessageBox::Yes;
+                if(responce) {
                     m_controller->onSync();
+                }
     });
 
     //rollback table
     connect(m_rollback, &QPushButton::clicked,
             this, [this]() {
-                bool responce = QMessageBox::question(
-                                    this,
-                                    "Reset",
-                                    "Are you sure you want to rollback?",
-                                    QMessageBox::Yes | QMessageBox::No
-                                    ) == QMessageBox::Yes;
-                if(responce)
+        bool responce = QMessageBox::question(
+                            this,
+                            "Reset",
+                            "Are you sure you want to rollback?",
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
+                if(responce) {
                     m_controller->onRollback();
+                }
     });
 
     //insert row
@@ -198,35 +199,35 @@ void MainPage::setupConnections() {
     //delete row
     connect(m_delete, &QPushButton::clicked,
             this, [this]() {
-                            if (!m_tableView)
-                                return;
-
-                            QModelIndex index = m_tableView->currentIndex();
-                            if (!index.isValid())
-                                return;
-
-                            m_controller->onDeleteRow(index.row());
-                        });
+        if (!m_tableView) {
+            return;
+        }
+        QModelIndex index = m_tableView->currentIndex();
+        if (!index.isValid()) {
+            return;
+        }
+        m_controller->onDeleteRow(index.row());
+    });
 
     //change field
     connect(m_change, &QPushButton::clicked,
             this, [this]() {
-                        if (!m_tableView)
-                            return;
-
-                        QModelIndex index = m_tableView->currentIndex();
-                        if (!index.isValid())
-                            return;
-
-                            m_controller->onChangeField(index.row(), index.column(), index.data(Qt::DisplayRole));
-                        });
+        if (!m_tableView) {
+            return;
+        }
+        QModelIndex index = m_tableView->currentIndex();
+        if (!index.isValid()) {
+            return;
+        }
+        m_controller->onChangeField(index.row(), index.column(), index.data(Qt::DisplayRole));
+    });
 
     //update table
     connect(m_userNames, &QComboBox::currentTextChanged,
             this, [this] (const QString& text) {
-                setStatusUser();
-                m_controller->onUpdateTable(text);
-                        });
+        setStatusUser();
+        m_controller->onUpdateTable(text);
+    });
 
     //from controller; set users model
     connect(m_controller, &Controller::usersChanged,
@@ -242,5 +243,5 @@ void MainPage::setupConnections() {
 
     //from controller; set status
     connect(m_controller, &Controller::statusChanged,
-            this, [this]() { setStatus(static_cast<SyncState>(m_controller->getStatus())); });
+            this, [this]() { setStatus(m_controller->getStatus()); });
 }

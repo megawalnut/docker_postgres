@@ -8,12 +8,6 @@ extern const QString PATH;
 
 class AppContext final {
 public:
-    enum class SyncState {
-        Unsynced = 0,
-        Synced = 1,
-        Unknown = -1
-    };
-
     struct UserInfo {
         int userId = -1;
         QString userName;
@@ -45,7 +39,6 @@ public:
 public:
     QList<UserInfo> users;
     UserInfo currentUser;
-    SyncState statusApp = SyncState::Unknown;
 
 private:
     explicit AppContext() = default;

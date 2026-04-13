@@ -13,22 +13,12 @@ Client::Client(const quint16 portNum,
     qDebug() << "Client::client: Client created";
 
     m_serverSocket = new QTcpSocket(this);
+    setupConnections();
+}
 
+void Client::connection() {
     qDebug() << "Client::client: Connection...";
-
     m_serverSocket->connectToHost(m_serverAddress, m_portNum);
-
-    connect(m_serverSocket, &QTcpSocket::readyRead,
-            this, &Client::onReadyRead);
-
-    connect(m_serverSocket, &QTcpSocket::connected,
-            this, &Client::onConnected);
-
-    connect(m_serverSocket, &QTcpSocket::disconnected,
-            this, &Client::onDisconnected);
-
-    connect(m_serverSocket, &QTcpSocket::errorOccurred,
-            this, &Client::onError);
 }
 
 void Client::onConnected() {
@@ -37,6 +27,7 @@ void Client::onConnected() {
                     .arg(m_portNum);
 
     m_reconnecting = false;
+    emit serverConnected();
 }
 
 void Client::onReadyRead() {
@@ -101,7 +92,7 @@ void Client::sendPacket(const QByteArray& clientPacket) {
 }
 
 void Client::onError(QAbstractSocket::SocketError err) {
-    m_reconnecting = true;
+    emit serverError();
     switch(err) {
     case QAbstractSocket::HostNotFoundError:
         qWarning() << "Client::onError: Error: The host was not found.";
@@ -122,14 +113,35 @@ void Client::onDisconnected() {
     qDebug() << QString("Client::onDisconnected: Disconnected from server %1:%2")
                     .arg(m_serverAddress)
                     .arg(m_portNum);
+
     m_buffer.clear();
-
-    if (m_reconnecting)
+    if (m_reconnecting) {
         return;
+    }
 
+    scheduleReconnect();
+    emit serverDisconnected();
+}
+
+void Client::scheduleReconnect() {
+    qWarning() << "Client::scheduleReconnect";
     m_reconnecting = true;
 
     QTimer::singleShot(5000, this, [this]() {
         m_serverSocket->connectToHost(m_serverAddress, m_portNum);
     });
+}
+
+void Client::setupConnections() {
+    connect(m_serverSocket, &QTcpSocket::readyRead,
+            this, &Client::onReadyRead);
+
+    connect(m_serverSocket, &QTcpSocket::connected,
+            this, &Client::onConnected);
+
+    connect(m_serverSocket, &QTcpSocket::disconnected,
+            this, &Client::onDisconnected);
+
+    connect(m_serverSocket, &QTcpSocket::errorOccurred,
+            this, &Client::onError);
 }

@@ -13,9 +13,14 @@ int main(int argc, char *argv[]) {
 
     auto* client = new Client(PORTNUM, ADDRESS);
 
+    // mock for creating make_unique<DBHelper>
+    //without mock -> QAssert
     AppContext::instance().init(-1, "", {});
 
     auto* table = new TableModel();
+
+    //tables, users is empty
+    //call fulldump to server
     auto* controller = new Controller(client, table, {});
 
     table->setParent(controller);

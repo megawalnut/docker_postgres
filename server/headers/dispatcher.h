@@ -5,6 +5,11 @@
 #include <QMutex>
 
 #include "icommand.h"
+#include "login.h"
+#include "registry.h"
+#include "sync.h"
+#include "rollback.h"
+#include "fulldump.h"
 
 class Dispatcher final {
 private:
@@ -15,12 +20,13 @@ private:
     Dispatcher& operator=(const Dispatcher& other) = delete;
 
 public:
-    enum Opcode : uint32_t {
-        unknown_ = 0,
-        login_,
-        registry_,
-        update_,
-        get_
+    enum class Opcode : uint32_t {
+        Unknown = 0,
+        Login,
+        Registry,
+        Sync,
+        Rollback,
+        FullDump
     };
 
     static inline Dispatcher* instance() {

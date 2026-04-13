@@ -1,4 +1,4 @@
-#ifndef UPDATE_H
+#ifndef SYNC_H
 #define UPDATE_H
 
 #include <QVariantMap>

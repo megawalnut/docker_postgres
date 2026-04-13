@@ -4,7 +4,10 @@
 #include <QString>
 #include <QVariantList>
 
-#include "packetQueryStructure.h"
+#include "packetStructure.h"
+#include "../DBHelpers/dbcrud.h"
+
+using Operation = DBCRUD::Operation;
 
 namespace ServerResponseKeys {
     inline const QString Result = "result";
@@ -20,35 +23,36 @@ namespace ServerResponseKeys {
 
 namespace ServerResponseStructure {
     enum class Status {
-        Success = 0,
+        Unknown = 0,
+        Success,
         Failed
     };
     struct Sync {
         QString tableName;
-        QVariantList changes;
+        Status result;
 
-        QVariantMap toMap() const {
-            return QVariantMap {
-                {ServerResponseKeys::TableName, tableName},
-                {ServerResponseKeys::Changes, changes}
-            };
-        }
+        // | -Insern- | -Delete- | -Change-
+        // Insern - rowId
+        // Delete - rowId
+        // Change - rowId, colId, fieldVal
+        QList<Operation> changes;
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(ServerResponseKeys::TableName).toString();
-            changes = map.value(ServerResponseKeys::Changes).toList();
+            result = static_cast<Status>(map.value(ServerResponseKeys::Result).toInt());
+
+            changes.clear();
+            QVariantList listChange = map.value(ServerResponseKeys::Changes).toList();
+            for(const auto& change : listChange) {
+                Operation op;
+                op.fromMap(change.toMap());
+                changes.append(op);
+            }
         }
     };
     struct Rollback {
         QString tableName;
         PacketStructure::BulkInsert snapshot;
-
-        QVariantMap toMap() const {
-            return QVariantMap {
-                {ServerResponseKeys::TableName, tableName},
-                {ServerResponseKeys::Snapshot, snapshot.toMap()}
-            };
-        }
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(ServerResponseKeys::TableName).toString();
@@ -60,16 +64,6 @@ namespace ServerResponseStructure {
         QString userName;
         QSet<QString> tables;
         Status result;
-
-        QVariantMap toMap() const {
-            QStringList list = QStringList(tables.cbegin(), tables.cend());
-            return QVariantMap {
-                {ServerResponseKeys::UserId, userId},
-                {ServerResponseKeys::UserName, userName},
-                {ServerResponseKeys::Tables, list},
-                {ServerResponseKeys::Result,  static_cast<int>(result)}
-            };
-        }
 
         void fromMap(const QVariantMap& map) {
             userId = map.value(ServerResponseKeys::UserId).toInt();
@@ -86,26 +80,11 @@ namespace ServerResponseStructure {
         QStringList users;
         QList<PacketStructure::BulkInsert> tables;
 
-        QVariantMap toMap() const {
-            QVariantList tablesList;
-
-            for (const auto& t : tables) {
-                tablesList.append(t.toMap());
-            }
-
-            return QVariantMap {
-                {ServerResponseKeys::Users, users},
-                {ServerResponseKeys::Tables, tablesList}
-            };
-        }
-
         void fromMap(const QVariantMap& map) {
             users = map.value(ServerResponseKeys::Users).toStringList();
-
             tables.clear();
 
             QVariantList list = map.value(ServerResponseKeys::Tables).toList();
-
             for (const auto& item : list) {
                 PacketStructure::BulkInsert t;
                 t.fromMap(item.toMap());

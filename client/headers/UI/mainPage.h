@@ -10,13 +10,14 @@
 #include <QTableView>
 #include <QPair>
 
+#include "../../appContext.h"
 #include "../models/tableModel.h"
 #include "controller.h"
-#include "../../appContext.h"
+
+using SyncState = DBCRUD::SyncState;
 
 class MainPage : public QWidget {
     Q_OBJECT
-    using SyncState = AppContext::SyncState;
 public:
     explicit MainPage(Controller* controller, QWidget *parent = nullptr);
     void setTableModel(TableModel* data);
@@ -26,7 +27,7 @@ public:
 private:
     void init();
     void setupConnections();
-    void setStatus(AppContext::SyncState status);
+    void setStatus(SyncState status);
     void setStatusUser();
 
 private:

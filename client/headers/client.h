@@ -12,20 +12,26 @@ public:
     explicit Client(const quint16 portNum, const QString& serverAddress, QObject* parent = nullptr);
     ~Client() = default;
 
+    void connection();
     void sendPacket(const QByteArray& clientPacket);
 
-    bool connected() {
-        return m_serverSocket->state() == QAbstractSocket::ConnectedState;
-    }
+    bool connected() { return m_serverSocket->state() == QAbstractSocket::ConnectedState; }
 
 private slots:
     void onReadyRead();
     void onConnected();
     void onError(QAbstractSocket::SocketError);
     void onDisconnected();
+    void setupConnections();
+    void scheduleReconnect();
 
-signals:
+signals:    
+    //signals to controller
     void packetReady(QByteArray rawData);
+    //info
+    void serverError();
+    void serverDisconnected();
+    void serverConnected();
 
 private:
     QTcpSocket* m_serverSocket = nullptr;

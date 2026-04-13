@@ -9,8 +9,9 @@ Dispatcher* Dispatcher::m_singleDispatcher = nullptr;
 Dispatcher::Dispatcher() {
     m_listCommands.push_back(std::make_unique<Login>());
     m_listCommands.push_back(std::make_unique<Registry>());
-    m_listCommands.push_back(std::make_unique<Update>());
-    m_listCommands.push_back(std::make_unique<Get>());
+    m_listCommands.push_back(std::make_unique<Sync>());
+    m_listCommands.push_back(std::make_unique<Rollback>());
+    m_listCommands.push_back(std::make_unique<FullDump>());
     qDebug() << "Dispatcher::The dispetcher was created";
 }
 

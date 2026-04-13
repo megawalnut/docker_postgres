@@ -4,11 +4,29 @@
 #include <QAbstractTableModel>
 #include <QObject>
 
-#include "../appContext.h"
+namespace TableModelKeys {
+    inline const QString Id = "id";
+    inline const QString Column = "column";
+    inline const QString Value = "value";
+}
 
 class TableModel : public QAbstractTableModel {
     Q_OBJECT
 public:
+    struct ChangeStruct {
+        int id = -1;
+        int column = -1;
+        QVariant value;
+
+        QVariantMap toMap() {
+            return {
+                {TableModelKeys::Id, id},
+                {TableModelKeys::Column, column},
+                {TableModelKeys::Value, value}
+            };
+        }
+    };
+
     enum Type {
         Unknown = 0,
         Car,
@@ -27,10 +45,10 @@ public:
 
     struct Record {
         uint32_t id = counter++;
-        Type     type;
-        QString  name;
-        QString  brand;
-        QString  model;
+        Type type;
+        QString name;
+        QString brand;
+        QString model;
         uint32_t year;
     };
 
@@ -46,20 +64,12 @@ public:
     int deleteRow(int selectedRow);
     QVariantMap changeField(int selectedRow,  int selectedCol, const QVariant& value);
 
-    AppContext::SyncState getSyncState() const;
-    void setSyncState(AppContext::SyncState status);
-
     QString getTableName() const;
     void setTableName(const QString& name);
 
-signals:
-    void syncStateChanged(AppContext::SyncState);
-
 private:
     static uint32_t counter;
-
     QString m_tableName;
-    AppContext::SyncState m_dataChanged = AppContext::SyncState::Unsynced;
     QList<Record> m_tableData;
 };
 

@@ -26,6 +26,7 @@ private:
     void setupConnections();
 
 private:
+    QTabWidget* m_tabs = nullptr;
     QLineEdit* m_loginUser = nullptr;
     QLineEdit* m_loginPass = nullptr;
     QPushButton* m_loginBtn = nullptr;

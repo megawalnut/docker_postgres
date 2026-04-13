@@ -84,8 +84,6 @@ int TableModel::insertRow() {
 
     beginInsertRows(QModelIndex{}, row, row);
     m_tableData.append(Record{});
-    m_dataChanged = AppContext::SyncState::Synced;
-    emit syncStateChanged(m_dataChanged);
     endInsertRows();
 
     return m_tableData[row].id;
@@ -102,8 +100,6 @@ int TableModel::deleteRow(int selectedRow) {
 
     beginRemoveRows(QModelIndex{}, selectedRow, selectedRow);
     m_tableData.removeAt(selectedRow);
-    m_dataChanged = AppContext::SyncState::Synced;
-    emit syncStateChanged(m_dataChanged);
     endRemoveRows();
 
     return id;
@@ -112,14 +108,11 @@ int TableModel::deleteRow(int selectedRow) {
 QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVariant& value) {
     qDebug() << "TableModel::changeField";
 
-    QVariantMap data;
-    data["id"] = -1;
-    data["column"] = -1;
-    data["field"] = QVariant{};
+    ChangeStruct data;
 
     if(selectedRow < 0 || selectedRow >= m_tableData.size()) {
         qWarning() << "TableModel::changeField:: Invalid row";
-        return data;
+        return data.toMap();
     }
 
     auto& item = m_tableData[selectedRow];
@@ -137,32 +130,17 @@ QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVa
                      index(selectedRow, selectedCol),
                      {Qt::EditRole});
 
-    m_dataChanged = AppContext::SyncState::Unsynced;
-    emit syncStateChanged(m_dataChanged);
+    data.id = item.id;
+    data.column = selectedCol;
+    data.value = value;
 
-    data["id"] = item.id;
-    data["column"] = selectedCol;
-    data["field"] = value;
-
-    return data;
-}
-
-AppContext::SyncState TableModel::getSyncState() const {
-    qDebug() << "TableModel::getSyncState";
-    return m_dataChanged;
-}
-
-void TableModel::setSyncState(AppContext::SyncState status) {
-    qDebug() << "TableModel::setSyncState";
-    m_dataChanged = status;
+    return data.toMap();
 }
 
 QString TableModel::getTableName() const {
-    qDebug() << "TableModel::getTableName";
     return m_tableName;
 }
 
 void TableModel::setTableName(const QString& name) {
-    qDebug() << "TableModel::setTableName";
     m_tableName = name;
 }

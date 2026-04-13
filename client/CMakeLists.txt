@@ -42,7 +42,7 @@ set(PROJECT_SOURCES
     headers/controllers/controller.h
     #_____________Utils_______________
     headers/utils/utils.h
-    headers/utils/packetQueryStructure.h
+    headers/utils/packetStructure.h
     headers/utils/serverQueryStructure.h
     headers/utils/serverResponseStructure.h
     #___________OpCodes______________

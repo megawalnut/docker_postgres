@@ -26,8 +26,9 @@ set(PROJECT_SOURCES
     #________________________________
     sources/icommand/registry.cpp
     sources/icommand/login.cpp
-    sources/icommand/get.cpp
-    sources/icommand/update.cpp
+    sources/icommand/sync.cpp
+    sources/icommand/rollback.cpp
+    sources/icommand/fulldump.cpp
     #_________________________________________
     #_________________________________________
     headers/server.h
@@ -39,8 +40,9 @@ set(PROJECT_SOURCES
     headers/icommand/icommand.h
     headers/icommand/registry.h
     headers/icommand/login.h
-    headers/icommand/get.h
-    headers/icommand/update.h
+    headers/icommand/sync.h
+    headers/icommand/rollback.h
+    headers/icommand/fulldump.h
     #_________________________________________
     #_________________________________________
 )

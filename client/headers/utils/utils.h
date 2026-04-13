@@ -6,6 +6,8 @@
 #include <QIODevice>
 #include <QDataStream>
 
+#include "../OpCodes/serverOpcode.h"
+
 constexpr uint32_t MAX_PACKET_SIZE = 10 * 1024 * 1024;
 constexpr uint32_t MIN_PACKET_SIZE = sizeof(uint32_t) * 2;  //just minimal packetSize
 constexpr uint32_t MIN_PACKET_PART = sizeof(uint32_t);  //minimal size(bytes) for read 'packetSize'
@@ -50,7 +52,7 @@ namespace Utils {
         }
 
         //static deserialize
-        static inline std::pair<uint32_t, QVariantMap> deserialize(const QByteArray& accepdedPacket/*checksum*/) {
+        static inline std::pair<ServerOpcode, QVariantMap> deserialize(const QByteArray& accepdedPacket/*checksum*/) {
             qDebug() << "Utils::deserialize started";
             QVariantMap deserializePacket;
 
@@ -65,12 +67,12 @@ namespace Utils {
 
             if (size != accepdedPacket.size()) {
                 qWarning() << "Packet size mismatch!";
-                return {0, {}};
+                return {ServerOpcode::Unknown, {}};
             }
 
             if (size > MAX_PACKET_SIZE) {
                 qWarning() << "Packet too big!";
-                return {0, {}};
+                return {ServerOpcode::Unknown, {}};
             }
 
             QByteArray payload = accepdedPacket.mid(MIN_PACKET_SIZE);  // size + opcode
@@ -85,13 +87,13 @@ namespace Utils {
                 payloadStream >> key >> value;
                 if (payloadStream.status() != QDataStream::Ok) {
                     qWarning() << "Payload stream error";
-                    return {0, {}};
+                    return {ServerOpcode::Unknown, {}};
                 }
                 deserializePacket.insert(key, value);
             }
             qDebug() << "Deserialize::success";
 
-            return {opcode,deserializePacket};
+            return {static_cast<ServerOpcode>(opcode),deserializePacket};
         }
     };
 }

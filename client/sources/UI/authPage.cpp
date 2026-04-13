@@ -1,6 +1,12 @@
+#include <QMessageBox>
+
 #include "../UI/authPage.h"
 
-AuthPage::AuthPage(Controller* controller, QWidget *parent) : QWidget{parent}, m_controller{controller} {
+AuthPage::AuthPage(Controller* controller, QWidget *parent)
+    :
+    QWidget{parent},
+    m_controller{controller}
+{
     qDebug() << "AuthPage::AuthPage";
     init();
     setupConnections();
@@ -11,8 +17,8 @@ void AuthPage::init() {
     QVBoxLayout* root = new QVBoxLayout();
     this->setLayout(root);
 
-    QTabWidget* tabs = new QTabWidget();
-    root->addWidget(tabs);
+    QTabWidget* m_tabs = new QTabWidget();
+    root->addWidget(m_tabs);
 
     //SIGN IN
     {
@@ -72,7 +78,7 @@ void AuthPage::init() {
             login->addLayout(row);
         }
 
-        tabs->addTab(loginTab, "Sign In");
+        m_tabs->addTab(loginTab, "Sign In");
     }
 
     //SIGN UP
@@ -133,22 +139,20 @@ void AuthPage::init() {
             registry->addLayout(row);
         }
 
-        tabs->addTab(registerTab, "Sign Up");
-        tabs->setCurrentIndex(static_cast<int>(TabPages::SignIn));
+        m_tabs->addTab(registerTab, "Sign Up");
+        m_tabs->setCurrentIndex(static_cast<int>(TabPages::SignIn));
     }
 }
 
 void AuthPage::setupConnections() {
-    qDebug() << "AuthPage::setupConnections";
+    //login strat connection to server
     connect(m_loginBtn, &QPushButton::clicked,
-            this, [this]() {
-                if (!m_controller)
-                    return;
-                m_controller->onSignIn(m_loginUser->text(), m_loginPass->text());
-    });
+            this, [this]() { m_controller->connectToServer(); });
+
+    //registry strat connection to server
     connect(m_regBtn, &QPushButton::clicked,
-            this, [this]() {
-                if (!m_controller)
-                    return;
-                m_controller->onSignUp(m_regUser->text(), m_regPass->text()); });
+            this, [this]() { m_controller->connectToServer(); });
+
+    connect(m_controller, &Controller::connected,
+            this, [this]() { m_controller->onAuth(m_loginUser->text(), m_loginPass->text(), m_tabs->currentIndex() == 0); });
 }
