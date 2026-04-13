@@ -38,8 +38,8 @@ namespace PacketStructure {
         }
     };
     struct Remove {
-        int rowId = -1;
         QString tableName;
+        int rowId = -1;
 
         void fromMap(const QVariantMap& map) {
             tableName = map.value(PacketStructureKeys::TableName).toString();

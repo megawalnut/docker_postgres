@@ -11,13 +11,13 @@ public:
     struct UserInfo {
         int userId = -1;
         QString userName;
-        QSet<QString> tables;
+        QString tableName;
     };
 
 public:
-    void init(int userId, const QString& name, const QSet<QString>& tables, const QString& dbPath = PATH) {
+    void init(int userId, const QString& name, const QString& tableName, const QString& dbPath = PATH) {
         qDebug() << "AppContext::init";
-        currentUser = {userId, name, tables};
+        currentUser = {userId, name, tableName};
         if (!m_db) {
             qWarning() << "AppContext::init: m_db is nullptr";
             m_db = std::make_unique<DBHelper>(dbPath);

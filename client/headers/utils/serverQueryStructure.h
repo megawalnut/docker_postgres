@@ -14,7 +14,6 @@ namespace ServerQueryKeys {
     inline const QString Changes = "changes";
     inline const QString UserName = "userName";
     inline const QString UserPass = "userPass";
-    inline const QString Operation = "operation";
 }
 
 namespace ServerQueryStructure {

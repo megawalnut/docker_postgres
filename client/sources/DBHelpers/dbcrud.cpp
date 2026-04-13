@@ -13,7 +13,7 @@ bool DBCRUD::insert(const Insert& data) {
     const auto& client = AppContext::instance();
 
     //check the privileges
-    if(!client.currentUser.tables.contains(data.tableName)) {
+    if(!(client.currentUser.tableName == data.tableName)) {
         qWarning() << "DBCRUD::insert: Permission denied";
         return false;
     }
@@ -45,7 +45,7 @@ bool DBCRUD::change(const Change& data) {
     const auto& client = AppContext::instance();
 
     //check the privileges
-    if(!client.currentUser.tables.contains(data.tableName)) {
+    if(!(client.currentUser.tableName == data.tableName)) {
         qWarning() << "DBCRUD::change: Permission denied";
         return false;
     }
@@ -76,7 +76,7 @@ bool DBCRUD::remove(const Remove& data) {
     const auto& client = AppContext::instance();
 
     //check the privileges
-    if(!client.currentUser.tables.contains(data.tableName)) {
+    if(!(client.currentUser.tableName == data.tableName)) {
         qWarning() << "DBCRUD::remove: Permission denied";
         return false;
     }
@@ -102,7 +102,7 @@ bool DBCRUD::clear(const Clear& data, bool isFullDump) {
     //check the privileges
     //skip privileges, only for full dump
     //fulldump calling only after connectiong/reconnecting
-    if(!client.currentUser.tables.contains(data.tableName) && !isFullDump) {
+    if(!(client.currentUser.tableName == data.tableName) && !isFullDump) {
         qWarning() << "DBCRUD::clear: Permission denied";
         return false;
     }
@@ -130,7 +130,7 @@ bool DBCRUD::bulkInsert(const BulkInsert& data, bool isFullDump) {
 
     //check the privileges
     //skip privileges, only for full dump
-    if(!client.currentUser.tables.contains(data.tableName) && !isFullDump) {
+    if(!(client.currentUser.tableName == data.tableName) && !isFullDump) {
         qWarning() << "DBCRUD::bulkInsert: Permission denied";
         return false;
     }

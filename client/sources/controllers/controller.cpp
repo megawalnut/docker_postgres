@@ -75,7 +75,7 @@ void Controller::onRollbackFromServer(const QVariantMap& packet) {
     ServerResponseStructure::Rollback data;
     data.fromMap(packet);
 
-    m_db->clear(Clear{data.tableName});
+    m_db->clear(Clear{AppContext::instance().currentUser.tableName});
     m_db->bulkInsert(data.snapshot);
     m_db->clearChanges();
     m_db->setStatus(SyncState::Synced);
@@ -95,7 +95,7 @@ void Controller::onAuthFromServer(const QVariantMap& packet, bool isLogin) {
 
         client.userId = data.userId;
         client.userName = data.userName;
-        client.tables = data.tables;
+        client.tableName = data.tableName;
 
         onFullDump();
 

@@ -15,7 +15,6 @@ namespace ServerResponseKeys {
     inline const QString Tables = "tables";
     inline const QString UserName = "userName";
     inline const QString Changes = "changes";
-    inline const QString State = "state";
     inline const QString Snapshot = "snapshot";
     inline const QString Users = "users";
     inline const QString UserId = "userId";
@@ -28,7 +27,6 @@ namespace ServerResponseStructure {
         Failed
     };
     struct Sync {
-        QString tableName;
         Status result;
 
         // | -Insern- | -Delete- | -Change-
@@ -38,7 +36,6 @@ namespace ServerResponseStructure {
         QList<Operation> changes;
 
         void fromMap(const QVariantMap& map) {
-            tableName = map.value(ServerResponseKeys::TableName).toString();
             result = static_cast<Status>(map.value(ServerResponseKeys::Result).toInt());
 
             changes.clear();
@@ -51,29 +48,23 @@ namespace ServerResponseStructure {
         }
     };
     struct Rollback {
-        QString tableName;
         PacketStructure::BulkInsert snapshot;
 
         void fromMap(const QVariantMap& map) {
-            tableName = map.value(ServerResponseKeys::TableName).toString();
             snapshot.fromMap(map.value(ServerResponseKeys::Snapshot).toMap());
         }
     };
     struct Auth {
+        QString tableName;
         int userId;
         QString userName;
-        QSet<QString> tables;
         Status result;
 
         void fromMap(const QVariantMap& map) {
             userId = map.value(ServerResponseKeys::UserId).toInt();
             userName = map.value(ServerResponseKeys::UserName).toString();
             result = static_cast<Status>(map.value(ServerResponseKeys::Result).toInt());
-
-            tables.clear();
-            for(const auto& name : map.value(ServerResponseKeys::Tables).toStringList()) {
-                tables.insert(name);
-            };
+            tableName = map.value(ServerResponseKeys::TableName).toString();
         }
     };
     struct FullDump {
