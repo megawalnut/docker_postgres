@@ -3,7 +3,7 @@
 
 DBCRUD::DBCRUD() : m_db(AppContext::instance().db()) {}
 // -------------------------------------- CRUD ---------------------------------------------
-bool DBCRUD::insert(const Insert& data) {
+bool DBCRUD::insert(const PacketStructure::Insert& data) {
     if(data.tableName.isEmpty())
     {
         qWarning() << "DBCRUD::insert: Missing fields";
@@ -34,7 +34,7 @@ bool DBCRUD::insert(const Insert& data) {
 
     return success;
 }
-bool DBCRUD::change(const Change& data) {
+bool DBCRUD::change(const PacketStructure::Change& data) {
     if(data.tableName.isEmpty() ||
         data.rowId == -1)
     {
@@ -65,7 +65,7 @@ bool DBCRUD::change(const Change& data) {
 
     return success;
 }
-bool DBCRUD::remove(const Remove& data) {
+bool DBCRUD::remove(const PacketStructure::Remove& data) {
     if(data.tableName.isEmpty() ||
         data.rowId == -1)
     {
@@ -91,7 +91,7 @@ bool DBCRUD::remove(const Remove& data) {
 
     return success;
 }
-bool DBCRUD::clear(const Clear& data, bool isFullDump) {
+bool DBCRUD::clear(const PacketStructure::Clear& data, bool isFullDump) {
     if(data.tableName.isEmpty()) {
         qWarning() << "DBCRUD::clear: Missing fields";
         return false;
@@ -117,7 +117,7 @@ bool DBCRUD::clear(const Clear& data, bool isFullDump) {
 
     return success;
 }
-bool DBCRUD::bulkInsert(const BulkInsert& data, bool isFullDump) {
+bool DBCRUD::bulkInsert(const PacketStructure::BulkInsert& data, bool isFullDump) {
     if(data.tableName.isEmpty() ||
         data.rows.isEmpty() ||
         data.columns.isEmpty())
@@ -179,10 +179,10 @@ void DBCRUD::setStatus(SyncState status) {
 void DBCRUD::clearChanges() {
     m_listChanges.clear();
 }
-void DBCRUD::addChange(const Operation& data) {
+void DBCRUD::addChange(const Operations::Operation& data) {
     m_listChanges.append(data);
 }
-QList<DBCRUD::Operation> DBCRUD::getChanges() const {
+QList<Operations::Operation> DBCRUD::getChanges() const {
     return m_listChanges;
 }
 // -----------------------------------------------------------------------------------------

@@ -15,6 +15,7 @@ public:
 
 private:
     QSqlDatabase m_db;    //SQLite
+    QString m_connectionName;   //unique thread name
     QString m_path;
 };
 #endif // DBHELPER_H

@@ -10,8 +10,7 @@
 #include <QTableView>
 #include <QPair>
 
-#include "../../appContext.h"
-#include "../models/tableModel.h"
+#include "tableModel.h"
 #include "controller.h"
 
 using SyncState = DBCRUD::SyncState;

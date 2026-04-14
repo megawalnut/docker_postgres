@@ -26,9 +26,9 @@ set(PROJECT_SOURCES
     sources/DBHelpers/dbhelper.cpp
     sources/DBHelpers/dbcrud.cpp
     #__________Controllers____________
-    sources/controllers/controller.cpp
+    sources/Controllers/controller.cpp
     #____________Models______________
-    sources/models/tableModel.cpp
+    sources/Models/tableModel.cpp
     #______________UI________________
     sources/UI/authPage.cpp
     sources/UI/mainPage.cpp
@@ -39,17 +39,17 @@ set(PROJECT_SOURCES
     headers/DBHelpers/dbhelper.h
     headers/DBHelpers/dbcrud.h
     #__________Controllers____________
-    headers/controllers/controller.h
+    headers/Controllers/controller.h
     #_____________Utils_______________
-    headers/utils/utils.h
-    headers/utils/packetStructure.h
-    headers/utils/serverQueryStructure.h
-    headers/utils/serverResponseStructure.h
+    headers/Utils/utils.h
+    headers/Utils/keys.h
+    headers/Utils/protocol.h
+    headers/Utils/userInfo.h
     #___________OpCodes______________
-    headers/OpCodes/localOpcode.h
-    headers/OpCodes/serverOpcode.h
+    headers/Opcodes/localOpcode.h
+    headers/Opcodes/serverOpcode.h
     #____________Models______________
-    headers/models/tableModel.h
+    headers/Models/tableModel.h
     #______________UI________________
     headers/UI/authPage.h
     headers/UI/mainPage.h
@@ -70,12 +70,12 @@ endif()
 
 target_include_directories(client PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/Controllers
     ${CMAKE_CURRENT_SOURCE_DIR}/headers/DBHelpers
-    ${CMAKE_CURRENT_SOURCE_DIR}/headers/dispatchers
-    ${CMAKE_CURRENT_SOURCE_DIR}/headers/controllers
-    ${CMAKE_CURRENT_SOURCE_DIR}/headers/utils
-    ${CMAKE_CURRENT_SOURCE_DIR}/headers/OpCodes
-    ${CMAKE_CURRENT_SOURCE_DIR}/headers/icommand
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/Models
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/Opcodes
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/UI
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/Utils
 )
 
 target_link_libraries(client PRIVATE

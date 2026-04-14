@@ -1,5 +1,5 @@
 #include "client.h"
-#include "utils.h"
+#include "../Utils/utils.h"
 
 Client::Client(const quint16 portNum,
                const QString& serverAddress,

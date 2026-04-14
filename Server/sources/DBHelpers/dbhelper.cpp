@@ -1,22 +1,33 @@
 #include "dbhelper.h"
 
-DBHelper::DBHelper(const QString& filePath) : m_path(filePath) {
-    m_connectionName = QString("User_%1")
-                             .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+DBHelper::DBHelper(const QString& hostName,
+                   const QString& dbName,
+                   const QString& dbUser,
+                   const QString& dbPassword)
+{
+    m_connectionName = QString("DB_%1")
+                           .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 
-    m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionName);
-    m_db.setDatabaseName(m_path);
+    m_db = QSqlDatabase::addDatabase("QPSQL", m_connectionName);
 
+    m_db.setHostName(hostName);
+    m_db.setDatabaseName(dbName);
+    m_db.setUserName(dbUser);
+    m_db.setPassword(dbPassword);
+    m_db.setPort(PORTDB);
+}
+
+//maybe unused
+void DBHelper::connect() {
     if(!m_db.open()) {
-        qWarning() << QString("DBHelper::DBHelper: Failed to open %1: %2")
-                            .arg(m_path)
+        qDebug() << QString("DBHelper::Failed to open %1: %2")
+                            .arg(m_db.hostName())
                             .arg(m_db.lastError().text());
-
-        qFatal("DB open failed");
     } else {
         qDebug() << QString("DBHelper::DBHelper: Opened database file %1")
-                            .arg(m_path);
+                        .arg(m_db.hostName());
     }
+    return;
 }
 
 DbResult DBHelper::send(const QString& request,  const QVariantList& values) {
@@ -33,7 +44,7 @@ DbResult DBHelper::send(const QString& request,  const QVariantList& values) {
 
     if(!query.exec()) {
         qWarning() << QString("DBHelper::send: The request cannot be completed %1")
-                            .arg(query.lastError().text());
+                          .arg(query.lastError().text());
         return {false, {}};
     }
 
@@ -51,7 +62,7 @@ DbResult DBHelper::send(const QString& request,  const QVariantList& values) {
 DBHelper::~DBHelper() {
     if(m_db.isOpen()) {
         m_db.close();
-        qWarning() << "DBHelper::send: Database is closed";
+        qDebug() << "DBHelper::Database is closed";
     }
     m_db = QSqlDatabase();
     QSqlDatabase::removeDatabase(m_connectionName);
