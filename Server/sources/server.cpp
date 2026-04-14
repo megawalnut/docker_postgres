@@ -29,9 +29,11 @@ void Server::slotNewConnection() {
         QThread* thread = new QThread(nullptr);
 
         QTcpSocket* socket = nextPendingConnection();
+        socket->setParent(nullptr);
         socket->moveToThread(thread);
 
         ClientConnection* newClient = new ClientConnection(m_db, socket);
+        newClient->setParent(nullptr);
         newClient->moveToThread(thread);
 
         connect(socket, &QTcpSocket::readyRead,

@@ -1,8 +1,8 @@
 #include "dbhelper.h"
 
-DBHelper::DBHelper(const QString& hostName,
+DBHelper::DBHelper(const QString& dbUser,
+                   const QString& hostName,
                    const QString& dbName,
-                   const QString& dbUser,
                    const QString& dbPassword)
 {
     m_connectionName = QString("DB_%1")
@@ -18,16 +18,17 @@ DBHelper::DBHelper(const QString& hostName,
 }
 
 //maybe unused
-void DBHelper::connect() {
+bool DBHelper::connect() {
     if(!m_db.open()) {
         qDebug() << QString("DBHelper::Failed to open %1: %2")
                             .arg(m_db.hostName())
                             .arg(m_db.lastError().text());
+        return false;
     } else {
         qDebug() << QString("DBHelper::DBHelper: Opened database file %1")
                         .arg(m_db.hostName());
+        return true;
     }
-    return;
 }
 
 DbResult DBHelper::send(const QString& request,  const QVariantList& values) {

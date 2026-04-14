@@ -9,8 +9,6 @@ ClientConnection::ClientConnection(std::shared_ptr<DBHelper> db, QTcpSocket* con
 {
     qDebug() << "ClientConnection::ClientConnection";
 
-    m_clientSocket->setParent(this);
-
     m_clientAddress = m_clientSocket->peerAddress().toString();
     m_portNum = m_clientSocket->peerPort();
 }
@@ -27,6 +25,7 @@ void ClientConnection::onDisconnected() {
 }
 
 void ClientConnection::onReadyRead() {
+    qDebug() << "ClientConnection::onReadyRead()";
     //read from socket and save
     m_buffer.append(m_clientSocket->readAll());
 

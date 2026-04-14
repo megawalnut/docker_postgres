@@ -154,5 +154,7 @@ void AuthPage::setupConnections() {
             this, [this]() { m_controller->connectToServer(); });
 
     connect(m_controller, &Controller::connected,
-            this, [this]() { m_controller->onAuth(m_loginUser->text(), m_loginPass->text(), m_tabs->currentIndex() == 0); });
+            this, [this]() {
+        qDebug() << "Start auth...";
+        m_controller->onAuth(m_loginUser->text(), m_loginPass->text(), m_tabs->currentIndex() == 0); });
 }

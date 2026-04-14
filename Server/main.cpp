@@ -15,6 +15,11 @@ int main(int argc, char *argv[]) {
                                         "test_database",// dataBase name
                                         "root");       // password
 
+    if(!db->connect()) {
+        qFatal("Main::main: Failed to connect test_database");
+    }
+    qDebug() << "Main::main: Success to connect test_database";
+
     Server server(db);
     qDebug() << "Main::main: Start";
 

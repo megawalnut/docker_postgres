@@ -8,13 +8,13 @@ extern const uint32_t PORTDB;
 
 class DBHelper {
 public:
-    DBHelper(const QString& hostName,
+    DBHelper(const QString& dbUser,
+             const QString& hostName,
              const QString& dbName,
-             const QString& dbUser,
              const QString& dbPassword);
     ~DBHelper();
 
-    void connect();
+    bool connect();
     DbResult send(const QString& request, const QVariantList& values);
 
 private:
