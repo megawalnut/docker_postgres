@@ -17,7 +17,7 @@ void AuthPage::init() {
     QVBoxLayout* root = new QVBoxLayout();
     this->setLayout(root);
 
-    QTabWidget* m_tabs = new QTabWidget();
+    m_tabs = new QTabWidget();
     root->addWidget(m_tabs);
 
     //SIGN IN
@@ -144,7 +144,21 @@ void AuthPage::init() {
     }
 }
 
+void AuthPage::clearFields(int index) {
+    if(index == static_cast<int>(TabPages::SignIn)) {
+        m_regUser->clear();
+        m_regPass->clear();
+    } else {
+        m_loginUser->clear();
+        m_loginPass->clear();
+    }
+}
+
 void AuthPage::setupConnections() {
+    //clear fields
+    connect(m_tabs, &QTabWidget::currentChanged,
+            this, &AuthPage::clearFields);
+
     //login strat connection to server
     connect(m_loginBtn, &QPushButton::clicked,
             this, [this]() { m_controller->connectToServer(); });
@@ -153,8 +167,20 @@ void AuthPage::setupConnections() {
     connect(m_regBtn, &QPushButton::clicked,
             this, [this]() { m_controller->connectToServer(); });
 
-    connect(m_controller, &Controller::connected,
+    connect(m_controller, &Controller::logout,
             this, [this]() {
-        qDebug() << "Start auth...";
-        m_controller->onAuth(m_loginUser->text(), m_loginPass->text(), m_tabs->currentIndex() == 0); });
+        QMessageBox::critical(
+            this,
+            "Error",
+            "Error!""Couldn't find the user!\n"
+            "Check your username and password!",
+            QMessageBox::Button::Ok);
+    });
+
+    connect(m_controller, &Controller::clientConnected,
+            this, [this]() {
+        bool isLogin = m_tabs->currentIndex() == static_cast<int>(TabPages::SignIn);
+        m_controller->onAuth(isLogin ? m_loginUser->text() : m_regUser->text(),
+                             isLogin ? m_loginPass->text() : m_regPass->text(), isLogin);
+    });
 }

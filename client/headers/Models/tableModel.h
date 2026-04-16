@@ -4,6 +4,8 @@
 #include <QAbstractTableModel>
 #include <QObject>
 
+#include "protocol.h"
+
 namespace TableModelKeys {
     inline const QString Id = "id";
     inline const QString Column = "column";
@@ -27,13 +29,6 @@ public:
         }
     };
 
-    enum Type {
-        Unknown = 0,
-        Car,
-        Boat,
-        Bicycle
-    };
-
     enum class Column {
         Id = 0,
         Type,
@@ -44,8 +39,8 @@ public:
     };
 
     struct Record {
-        uint32_t id = counter++;
-        Type type;
+        uint32_t id;
+        QString type;
         QString name;
         QString brand;
         QString model;
@@ -58,12 +53,16 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
 public:
     int insertRow();
     int deleteRow(int selectedRow);
     QVariantMap changeField(int selectedRow,  int selectedCol, const QVariant& value);
 
+    void clear();
+    void loadFromBulkInsert(const PacketStructure::BulkInsert& data);
     QString getTableName() const;
     void setTableName(const QString& name);
 

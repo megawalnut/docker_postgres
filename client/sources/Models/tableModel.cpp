@@ -11,7 +11,6 @@ int TableModel::rowCount(const QModelIndex &parent) const {
     }
     return m_tableData.size();
 }
-
 int TableModel::columnCount(const QModelIndex &parent) const {
     if (parent.isValid()) {
         qWarning() << "TableModel::columnCount:: Invalid row";
@@ -19,7 +18,6 @@ int TableModel::columnCount(const QModelIndex &parent) const {
     }
     return 6;
 }
-
 QVariant TableModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) {
         qWarning() << "TableData::data: Invalid index";
@@ -40,14 +38,7 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
 
     switch (static_cast<Column>(index.column())) {
     case Column::Id: return item.id;
-    case Column::Type: {
-        switch (item.type) {
-        case Type::Car: return "Car";
-        case Type::Boat: return "Boat";
-        case Type::Bicycle: return "Bicycle";
-        default: return "Unknown";
-        }
-    }
+    case Column::Type: return item.type;
     case Column::Name: return item.name;
     case Column::Brand: return item.brand;
     case Column::Model: return item.model;
@@ -56,7 +47,25 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
 
     return {};
 }
+Qt::ItemFlags TableModel::flags(const QModelIndex &index) const {
+    if (!index.isValid())
+        return Qt::NoItemFlags;
 
+    return Qt::ItemIsSelectable
+           | Qt::ItemIsEnabled
+           | Qt::ItemIsEditable;
+}
+bool TableModel::setData(const QModelIndex &index,
+                         const QVariant &value,
+                         int role)
+{
+    if (!index.isValid() || role != Qt::EditRole)
+        return false;
+
+    changeField(index.row(), index.column(), value);
+
+    return true;
+}
 QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role != Qt::DisplayRole) {
         qWarning() << "TableData::headerData: Invalid role";
@@ -83,12 +92,11 @@ int TableModel::insertRow() {
     int row = m_tableData.size();
 
     beginInsertRows(QModelIndex{}, row, row);
-    m_tableData.append(Record{});
+    m_tableData.append(Record{++counter});
     endInsertRows();
 
     return m_tableData[row].id;
 }
-
 int TableModel::deleteRow(int selectedRow) {
     qDebug() << "TableModel::deleteRow";
     if(selectedRow < 0 || selectedRow >= m_tableData.size()) {
@@ -104,7 +112,6 @@ int TableModel::deleteRow(int selectedRow) {
 
     return id;
 }
-
 QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVariant& value) {
     qDebug() << "TableModel::changeField";
 
@@ -119,7 +126,7 @@ QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVa
 
     switch(static_cast<Column>(selectedCol)){
     case Column::Id:    item.id = value.toUInt(); break;
-    case Column::Type:  item.type = static_cast<Type>(value.toUInt()); break;
+    case Column::Type:  item.type = value.toString(); break;;
     case Column::Name:  item.name = value.toString(); break;
     case Column::Brand: item.brand = value.toString(); break;
     case Column::Model: item.model = value.toString(); break;
@@ -136,11 +143,31 @@ QVariantMap TableModel::changeField(int selectedRow,  int selectedCol, const QVa
 
     return data.toMap();
 }
+void TableModel::loadFromBulkInsert(const PacketStructure::BulkInsert& data) {
+    beginResetModel();
+    m_tableData.clear();
 
+    for (const auto& row : data.rows) {
+        if (row.size() < 6) {
+            continue;
+        }Record rec;
+        rec.id    = row[0].toUInt();
+        rec.type  = row[1].toString();
+        rec.name  = row[2].toString();
+        rec.brand = row[3].toString();
+        rec.model = row[4].toString();
+        rec.year  = row[5].toUInt();
+        m_tableData.append(rec);
+    }
+    endResetModel();
+}
+
+void TableModel::clear() {
+    m_tableData.clear();
+}
 QString TableModel::getTableName() const {
     return m_tableName;
 }
-
 void TableModel::setTableName(const QString& name) {
     m_tableName = name;
 }

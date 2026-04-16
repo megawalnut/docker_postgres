@@ -30,48 +30,38 @@ void Server::slotNewConnection() {
 
         QTcpSocket* socket = nextPendingConnection();
         socket->setParent(nullptr);
-        socket->moveToThread(thread);
 
-        ClientConnection* newClient = new ClientConnection(m_db, socket);
+
+        qintptr socketDescriptor = socket->socketDescriptor();
+        socket->moveToThread(thread);
+        connect(thread, &QThread::finished, socket, &QObject::deleteLater);
+
+        ClientConnection* newClient = new ClientConnection(socketDescriptor);
         newClient->setParent(nullptr);
         newClient->moveToThread(thread);
 
-        connect(socket, &QTcpSocket::readyRead,
-                newClient, &ClientConnection::onReadyRead);
-
-        connect(socket, &QTcpSocket::disconnected,
-                newClient, &ClientConnection::onDisconnected);
+        connect(thread, &QThread::started,
+                newClient, &ClientConnection::init);
 
         //deleteLater
         connect(thread, &QThread::finished,
                 newClient, &QObject::deleteLater);
-
         connect(thread, &QThread::finished,
                 thread, &QObject::deleteLater);
-
-        connect(newClient, &ClientConnection::disconnected, [this, newClient, thread](){
+        connect(newClient, &ClientConnection::disconnected,
+                this, [this, newClient, thread](){
             thread->quit();
             m_clients.removeOne(newClient);
             qWarning() << "Server::The client is disconnected";
-        });
+        }, Qt::QueuedConnection);
 
         //add new client in the list
         m_clients.append(newClient);
-
-        qDebug() << QString("Server::The client is connected from %1 : %2")
-                            .arg(socket->peerAddress().toString())
-                            .arg(socket->peerPort());
-
         thread->start();
     }
 }
 
 Server::~Server() {
-    for(ClientConnection* client : m_clients) {
-        client->deleteLater();
-    }
-    m_clients.clear();
-
     if(isListening()) {
         qWarning() << "Server::Stopping listening on port";
         close();

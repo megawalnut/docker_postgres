@@ -24,6 +24,7 @@ public:
 private:
     void init();
     void setupConnections();
+    void clearFields(int index);
 
 private:
     QTabWidget* m_tabs = nullptr;

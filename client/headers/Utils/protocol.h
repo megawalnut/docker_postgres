@@ -118,7 +118,8 @@ namespace ClientQueryStructure {
         QString userPass;
 
         QVariantMap toMap() const {
-            QVariantMap map = user.toMap();
+            QVariantMap map;
+            map[Keys::UserInfo_UserInfo] = user.toMap();
             map[Keys::ClientQuery_UserPass] = userPass;
             return map;
         }

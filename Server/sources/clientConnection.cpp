@@ -2,15 +2,46 @@
 #include "utils.h"
 #include "dispatcher.h"
 
-ClientConnection::ClientConnection(std::shared_ptr<DBHelper> db, QTcpSocket* const socket)
+ClientConnection::ClientConnection(quintptr socketDescriptor,
+                                   QObject* parent)
     :
-    m_db(db),
-    m_clientSocket(socket)
-{
-    qDebug() << "ClientConnection::ClientConnection";
+    QObject(parent),
+    m_socketDescriptor(socketDescriptor)
+{}
+
+void ClientConnection::init() {
+    m_clientSocket = new QTcpSocket(this);
+
+    if (!m_clientSocket->setSocketDescriptor(m_socketDescriptor)) {
+        qWarning() << "ClientConnection::init: Failed:"
+                   << m_clientSocket->errorString();
+        emit disconnected();
+        return;
+    }
+
+    m_db = std::make_unique<DBHelper>(
+        "admin",
+        "127.0.0.1",
+        "test_database",
+        "root"
+        );
+
+    if (!m_db->connect()) {
+        qWarning() << "DB connect failed in thread";
+        emit disconnected();
+        return;
+    }
 
     m_clientAddress = m_clientSocket->peerAddress().toString();
     m_portNum = m_clientSocket->peerPort();
+
+    connect(m_clientSocket, &QTcpSocket::readyRead,
+            this, &ClientConnection::onReadyRead);
+    connect(m_clientSocket, &QTcpSocket::disconnected,
+            this, &ClientConnection::onDisconnected);
+
+    qDebug() << "ClientConnection::init: Success on "
+             << m_clientAddress << ":" << m_portNum;
 }
 
 void ClientConnection::setUser(const UserInfo& user) {
@@ -21,6 +52,7 @@ UserInfo ClientConnection::getUser() const {
 }
 
 void ClientConnection::onDisconnected() {
+    m_clientSocket->close();
     emit disconnected();
 }
 

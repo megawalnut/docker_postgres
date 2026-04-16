@@ -63,9 +63,9 @@ public slots:
 
 signals:
     //signals from server connection
-    void connected();
-    void error();
-    void disconnected();
+    void clientConnected();
+    void clientError();
+    void clientDisconnected();
 
     //signals from server connection
     void syncSuccess();
@@ -84,12 +84,13 @@ signals:
 
     void statusChanged();
 
-    void authSuccess(bool isLogin, const QString name);
+    void mainPageFinished(const QString name);
+    void authSuccess(bool isLogin);
     void logout();
 
 private:
     Client* m_client = nullptr;
-    QHash<QString, TableModel*> m_tables;   //users tables
+    QHash<QString, TableModel*> m_tables;   //[tableName:TableModel]
     TableModel* m_currentTable = nullptr;   //current user table
     QStringList m_users;    //users tables
     std::unique_ptr<DBCRUD> m_db = nullptr; //cache

@@ -4,11 +4,11 @@
 #include <cstdint>
 
 enum class ServerOpcode : uint32_t {
-    Unknown = 0,
-    Login,
+    Login = 0,
     Registry,
     Sync,
     Rollback,
-    FullDump
+    FullDump,
+    Unknown
 };
 #endif //SERVEROPCODE_H

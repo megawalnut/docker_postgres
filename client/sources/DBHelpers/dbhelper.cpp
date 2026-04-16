@@ -27,11 +27,18 @@ DbResult DBHelper::send(const QString& request,  const QVariantList& values) {
 
     QSqlQuery query(m_db);
 
-    query.prepare(request);
-    for (const auto& v : values)
-        query.addBindValue(v);
+    bool ok = false;
 
-    if(!query.exec()) {
+    if (values.isEmpty()) {
+        ok = query.exec(request);
+    } else {
+        query.prepare(request);
+        for (const auto& v : values)
+            query.addBindValue(v);
+        ok = query.exec();
+    }
+
+    if (!ok) {
         qWarning() << QString("DBHelper::send: The request cannot be completed %1")
                             .arg(query.lastError().text());
         return {false, {}};

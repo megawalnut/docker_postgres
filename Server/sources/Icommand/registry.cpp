@@ -9,7 +9,6 @@ QVariantMap Registry::exec(const QVariantMap& data, ClientConnection* client) {
     ServerResponseStructure::Auth responce;
     responce.user.userName = query.user.userName;
     responce.result = ServerResponseStructure::Status::Failed;
-
     const auto& ptr_db = client->db();
     if(!ptr_db) {
         qWarning() << "Login::exec: Pointer to database is empy";
@@ -42,7 +41,7 @@ QVariantMap Registry::exec(const QVariantMap& data, ClientConnection* client) {
     }
 
     //------------------- CREATE --------------------
-    sql = QString("CREATE TABLE %1 (id SERIAL PRIMARY KEY, data TEXT)").arg(tableName);
+    sql = QString("CREATE TABLE %1 (id SERIAL PRIMARY KEY, type TEXT, name TEXT, brand TEXT, model TEXT, year INT)").arg(tableName);
     std::tie(success, std::ignore) = ptr_db->send(sql, {});
     if (!success) {
         qWarning() << "Registry::exec: Failed CREATE TABLE " << tableName;

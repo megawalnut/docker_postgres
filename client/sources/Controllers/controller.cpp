@@ -75,10 +75,15 @@ void Controller::onRollbackFromServer(const QVariantMap& packet) {
     ServerResponseStructure::Rollback data;
     data.fromMap(packet);
 
+    m_currentTable->clear();
+
     m_db->clear(PacketStructure::Clear{AppContext::instance().currentUser.tableName});
     m_db->bulkInsert(data.snapshot);
     m_db->clearChanges();
     m_db->setStatus(SyncState::Synced);
+
+    emit currentModelChanged(m_currentTable);
+    emit currentModelNameChanged(m_currentTable->getTableName());
 
     emit statusChanged();
 }
@@ -97,11 +102,10 @@ void Controller::onAuthFromServer(const QVariantMap& packet, bool isLogin) {
         client.userName = data.user.userName;
         client.tableName = data.user.tableName;
 
-        onFullDump();
-
-        emit currentUserChanged(client.userName);
         emit statusChanged();
-        emit authSuccess(isLogin, client.userName);
+        emit currentUserChanged(client.userName);
+        emit authSuccess(isLogin);
+
         qDebug() << "Controller::onAuthFromServer: Success";
         return;
     }
@@ -119,25 +123,47 @@ void Controller::onAuthFromServer(const QVariantMap& packet, bool isLogin) {
 }
 void Controller::onFullDumpFromServer(const QVariantMap& packet) {
     qDebug() << "Controller::onFullDumpFromServer";
-    if (!m_client) {
-        qWarning() << "Controller::onFullDumpFromServer: Invalid client";
-        return;
-    }
+
+    m_users.clear();
 
     ServerResponseStructure::FullDump data;
     data.fromMap(packet);
 
     m_users = data.users;
 
-    for(const auto& table : data.tables) {
+    const auto& client = AppContext::instance().currentUser;
+    if (client.tableName.isEmpty()) {
+        qWarning() << "No current table in AppContext";
+        return;
+    }
+
+    for (const auto& table : data.tables) {
         m_db->clear(PacketStructure::Clear{table.tableName}, true);
         m_db->bulkInsert(table, true);
+
+        //create TableModel
+        if (!m_tables.contains(table.tableName)) {
+            m_tables[table.tableName] = new TableModel(this);
+            m_tables[table.tableName]->setTableName(table.tableName);
+        }
+
+        //load data
+        m_tables[table.tableName]->loadFromBulkInsert(table);
+    }
+
+    if (m_tables.contains(client.tableName)) {
+        m_tables[client.tableName]->clear();
+        m_currentTable = m_tables[client.tableName];
+        emit currentModelChanged(m_currentTable);
+        emit currentModelNameChanged(client.tableName);
     }
 
     m_db->clearChanges();
     m_db->setStatus(SyncState::Synced);
 
+    emit usersChanged(m_users);
     emit statusChanged();
+    emit mainPageFinished(client.userName);
 }
 // -----------------------------------------------------------------------------------------
 // -------------------------------- COMMANDS TO SERVER -------------------------------------
@@ -302,17 +328,17 @@ void Controller::setupConnections() {
     connect(m_client, &Client::serverConnected,
             this, [this]() {
         m_db->setStatus(SyncState::Synced);
-        emit connected();
+        emit clientConnected();
     });
     connect(m_client, &Client::serverError,
             this, [this]() {
         m_db->setStatus(SyncState::Unknown);
-        emit error();
+        emit clientError();
     });
     connect(m_client, &Client::serverDisconnected,
             this, [this]() {
         m_db->setStatus(SyncState::Unknown);
-        emit disconnected();
+        emit clientDisconnected();
     });
 }
 void Controller::parseServerCommand(ServerOpcode command, const QVariantMap& packet) {

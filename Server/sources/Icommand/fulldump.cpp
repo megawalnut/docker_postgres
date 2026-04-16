@@ -43,6 +43,8 @@ QVariantMap FullDump::exec(const QVariantMap& data, ClientConnection* client) {
             continue;
         }
 
+        snapshot.columns = {"ID", "Type", "Name", "Brand", "Model", "Year"};
+
         if (res.empty()) {
             //table is empty
             tables.append(snapshot);
